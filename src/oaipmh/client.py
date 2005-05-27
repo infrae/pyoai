@@ -242,42 +242,24 @@ def Identify(server, args, xml):
                               deletedRecord, granularity, compression)
     return identify
 
-class ResumptionList:
-    def __init__(self, server, args, xml):
-        self._server = server
-        self._namespaces = server.getNamespaces()
-        self._result, self._token = self.firstBatch(xml)
-        self._max = args.get('max', None)
-        
-    def __getitem__(self, i):
-        if type(i) == SliceType:
-            raise Error, "Can't handle slices for resumption list"
-        # XXX wish we could use generators/iterators but need to stay
-        # python 2.1 compatible
-        if i < len(self._result):
-            return self._result[i]
-        elif self._token is not None:
-            # stop if we're over max already
-            # this is not very accurate but max is only to have
-            # an approximate cap anyway, and this performs better than
-            # doing check each time (XXX or is this worth it?)
-            if self._max is not None and i >= self._max:
-                raise IndexError
-            entries, self._token = self.nextBatch(self._token) 
-            self._result.extend(entries)
-            return self._result[i]
-        else:
-            raise IndexError
+def ResumptionListGenerator(firstBatch, nextBatch):
+    result, token = firstBatch()
+    while 1:
+        for item in result:
+            yield item
+        if token is None:
+            break
+        result, token = nextBatch(token)
 
-class ListIdentifiers(ResumptionList):
-    def firstBatch(self, xml):
-        return buildIdentifiers(self._server, self._namespaces, xml)
-
-    def nextBatch(self, token):
-        xml = self._server.makeRequest(
-            verb= 'ListIdentifiers',
-            resumptionToken=self._token)
-        return buildIdentifiers(self._server, self._namespaces, xml)
+def ListIdentifiers(server, args, xml):
+    namespaces = server.getNamespaces()
+    def firstBatch():
+        return buildIdentifiers(server, namespaces, xml)
+    def nextBatch(token):
+        xml = server.makeRequest(verb='ListIdentifiers',
+                                 resumptionToken=token)
+        return buildIdentifiers(server, namespaces, xml)
+    return ResumptionListGenerator(firstBatch, nextBatch)
 
 def ListMetadataFormats(server, args, xml):
     #XXX args always thrown away?
@@ -289,7 +271,7 @@ def ListMetadataFormats(server, args, xml):
         '/oai:OAI-PMH/oai:ListMetadataFormats/oai:metadataFormat')
     metadataFormats = []
     for metadataFormat_node in metadataFormat_nodes:
-        e = etree.XPathEvaluator(metadataFormat_node, namespaces).evaluate        
+        e = etree.XPathEvaluator(metadataFormat_node, namespaces).evaluate
         metadataPrefix = e('string(oai:metadataPrefix/text())')
         schema = e('string(oai:schema/text())')
         metadataNamespace = e('string(oai:metadataNamespace/text())')
@@ -298,38 +280,34 @@ def ListMetadataFormats(server, args, xml):
 
     return metadataFormats
 
-class ListRecords(ResumptionList):
-    def __init__(self, server, args, xml):
-        # have to do this before calling init..
-        self._metadata_prefix = args['metadataPrefix']
-        self._metadata_schema_registry = server.getMetadataSchemaRegistry()
-        ResumptionList.__init__(self, server, args, xml)
-
-    def firstBatch(self, xml):
+def ListRecords(server, args, xml):
+    namespaces = server.getNamespaces()
+    metadata_prefix = args['metadataPrefix']
+    metadata_schema_registry = server.getMetadataSchemaRegistry()
+    def firstBatch():
         return buildRecords(
-            self._server,
-            self._metadata_prefix, self._namespaces,
-            self._metadata_schema_registry,
-            xml)
-
-    def nextBatch(self, token):
-        xml = self._server.makeRequest(
-            verb= 'ListRecords',
-            resumptionToken=self._token)
+            server, metadata_prefix, namespaces,
+            metadata_schema_registry, xml)
+    def nextBatch(token):
+        xml = server.makeRequest(
+            verb='ListRecords',
+            resumptionToken=token)
         return buildRecords(
-            self._server,
-            self._metadata_prefix, self._namespaces,
-            self._metadata_schema_registry, xml)
+            server,
+            metadata_prefix, namespaces,
+            metadata_schema_registry, xml)
+    return ResumptionListGenerator(firstBatch, nextBatch)
 
-class ListSets(ResumptionList):
-    def firstBatch(self, xml):
-        return buildSets(self._server, self._namespaces, xml)
-
-    def nextBatch(self, token):
-        xml = self._server.makeRequest(
+def ListSets(server, args, xml):
+    namespaces = server.getNamespaces()
+    def firstBatch():
+        return buildSets(server, namespaces, xml)
+    def nextBatch(token):
+        xml = server.makeRequest(
             verb='ListSets',
-            resumptionToken=self._token)
-        return buildSets(self._server, self._namespaces, xml)
+            resumptionToken=token)
+        return buildSets(server, namespaces, xml)
+    return ResumptionListGenerator(firstBatch, nextBatch)
 
 class OAIMethodError(Exception):
     pass
@@ -455,7 +433,6 @@ class BaseServerProxy:
          'metadataPrefix':'required',
          'set':'optional',
          'resumptionToken':'exclusive',
-         'max':'local'
          },
         ListIdentifiers
         )
@@ -473,7 +450,6 @@ class BaseServerProxy:
          'set':'optional',
          'resumptionToken':'exclusive',
          'metadataPrefix':'required',
-         'max':'local',
          },
         ListRecords
         )
@@ -481,7 +457,6 @@ class BaseServerProxy:
     listSets = OAIMethod(
         'ListSets',
         {'resumptionToken':'exclusive',
-         'max':'local'
          },
         ListSets
         )

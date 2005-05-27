@@ -13,6 +13,11 @@ Changes
 * introduced oaipmh namespace package, and move client functionality
   into oaipmh.client.
 
+* Use generators instead of hacked up __getitem__. This means that the
+  return from listRecords, listIdentifiers and listSets are now not
+  normal lists but iterators. They can easily be turned into a normal
+  list by using list() on them, however.
+
 1.0.1 
 =====
 

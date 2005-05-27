@@ -50,6 +50,8 @@ class RequestTestCase(TestCase):
         headers = fakeserver.listIdentifiers(from_="2003-04-10",
                                              metadataPrefix='oai_dc')
         # lazy, just test first one
+        headers = list(headers)
+        
         header = headers[0]
         self.assertEquals(
             'hdl:1765/308',
@@ -61,10 +63,12 @@ class RequestTestCase(TestCase):
             ['1:2'],
             header.setSpec())
         self.assert_(not header.isDeleted())
-
+        self.assertEquals(16, len(headers))
+        
     def test_listRecords(self):
         records = fakeserver.listRecords(from_="2003-04-10",
                                          metadataPrefix='oai_dc')
+        records = list(records)
         # lazy, just test first one
         header, metadata, about = records[0]
         self.assertEquals(
@@ -102,6 +106,7 @@ class RequestTestCase(TestCase):
             ]
         # lazy, just compare first two sets..
         sets = fakeserver.listSets()
+        sets = list(sets)
         compare = [sets[0], sets[1]]
         self.assertEquals(
             expected,
