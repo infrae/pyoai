@@ -1,0 +1,49 @@
+================
+oaipmh changelog
+================
+
+under development
+=================
+
+Changes
+-------
+
+* switch over from using libxml2 Python wrappers to the lxml binding.
+
+* introduced oaipmh namespace package, and move client functionality
+  into oaipmh.client.
+
+1.0.1 
+=====
+
+Bugs fixed
+----------
+
+* Typo in oaipmh.py
+
+1.0
+===
+
+Bugs fixed
+----------
+
+* Added an encoding parameter to the serialize call, which fixes a
+  unicode bug.
+
+0.7.4
+=====
+
+Bugs fixed
+----------
+
+* A harvest can return records with <header status="deleted"> that
+  contain no metadata and are merely an indication that that
+  metadata-set for that resource is no longer on the OAI service.
+  These records should be used to remove metadata from the catalog if
+  it is there, bur should never be stored or catalogued
+  themselves. They aren't now. (Fixed in zope/OAICore/core.py)
+
+0.7 
+===
+
+Initial public release.

@@ -1,0 +1,322 @@
+====================
+Python oaipmh module
+====================
+
+Introduction
+============
+
+The oaipmh module implements the `OAI-PMH protocol`_. It encapsulates
+this protocol in Python, so that a request to the OAI-PMH server is
+just a method call from the Python perspective. The XML data that is
+returned from the server is processed as well, and returned as Python
+objects.
+
+API
+===
+
+.. _ServerProxy:
+
+``class ServerProxy(uri [, metadataSchemaRegistry])`` 
+
+  A ServerProxy instance is an object that manages communication with
+  the remote OAI-PMH server. The required first argument is the URI
+  that accepts OAI-PMH requests. 
+
+  The second optional argument is a `MetadataSchemaRegistry`_
+  instance. This registry contains the metadata schemas that are
+  understood by client. If it isn't supplied, a default and global
+  schema registry will be used, with at least support for the
+  ``oai_dc`` metadata scheme.
+
+  The returned instance is a proxy object with methods that can be
+  used to invoke the corresponding OAI-PMH requests to the server. The
+  methods are named after the corresponding verbs of the OAI-PMH
+  protocol, though start with a lowercase letter to follow Python
+  camelCase conventions.
+
+  The methods take zero or more keyword arguments; non-keyword
+  arguments are not supported. The methods do some automatic checking
+  to determine whether the right combination of arguments is used.
+
+  The section `Protocol Requests and Responses`_ of the OAI-PMH
+  standard describes the verbs (and thus methods) and the allowed
+  arguments combinations.
+
+  ``getRecord(identifier, metadataPrefix)``
+
+    Returns a `header, metadata, about`_ tuple for the identified item.
+
+  ``identify()``
+
+    Get server identification information. This returns a
+    `ServerIdentify`_ instance.
+
+  ``listIdentifiers(metadataPrefix [, from_ [, until [, set [, resumptionToken [, max]]]]])``
+     
+    Returns a `lazy sequence`_ of `Header`_ instances.
+  
+    The result can be restricted using  `from_ and until`_ arguments.
+
+    The result can be restricted for one particular set.
+
+  ``listMetadataFormats([identifier])``
+ 
+    If ``identifier`` is not specified, returns a list of
+    ``metadataPrefix, schema, metadataNamespace`` tuples for this
+    OAI-PMH repository.
+
+    If ``identifier`` is specified, returns a list of tuples for the
+    metadata associated with the identified item.
+
+    ``metadataPrefix`` is a short string to uniquely identify the
+    metadata format for this OAI-PMH repository. 
+
+    ``schema`` is a URI to the XML schema describing the metadata
+    format.
+
+    ``metadataNamespace`` is a namespace URI used for to identify XML
+    content in this metadata format.
+
+  ``listRecords(metadataPrefix [, from_ [, until [, set [, resumptionToken [, max]]]]])``
+
+    Returns a `lazy sequence`_ of `header, metadata, about`_ tuples
+    for items in the repository.
+
+    The result can be restricted using  `from_ and until`_ arguments.
+
+    The result can be restricted for one particular set.
+
+  ``listSets([resumptionToken [, max]])``
+
+    Returns a `lazy sequence`_ of ``setSpec, setName, setDescription``
+    tuples.
+
+    ``setSpec`` is the repository-unique name of a set. It may be
+    partioned into a hierarchy using a colon. See the section `Set`_
+    of the OAI-PMH standard for more information.
+
+    ``setName`` is the name of the set as it should be displayed to
+    end-users.
+
+    At the of writing ``setDescription`` is not yet supported by the
+    oaipmh module, and this element of the tuple will always be ``None``.
+
+  The following methods pertain to the metadata schema system.
+
+  ``addMetadataSchema(schema)``
+
+    Add a MetadataSchema_ instance to the ServerProxy_. The server
+    will then be able to create Metadata_ instances for metadata in
+    the format handled by the MetadataSchema_ instance.
+
+  ``getMetadataSchemaRegistry()``
+
+    Get the `MetadataSchemaRegistry`_ instance that handles metadata
+    for this `ServerProxy`_ instance.
+ 
+.. _Header:
+
+``class Header(..)``
+
+  ``identifier()``
+
+    Returns the unique identifier of this item in this repository. The
+    identifier must be in URI form. Some repositories may for instance
+    implement this as handles (see www.handle.net).
+
+    See the `Unique Identifier`_ section of the OAI-PMH standard for
+    more information.
+
+    .. _Unique Identifier: http://www.openarchives.org/OAI/openarchivesprotocol.html#UniqueIdentifier
+    
+  ``datestamp()``
+
+    Returns the time at which this item was added or last updated
+    within the repository. This is in string form, in `UTCdatetime`_
+    format.
+
+  ``setSpec()``
+
+    Returns a list of the sets this item is in. The object may be in
+    zero or more sets. Sets are represented as strings. See also the
+    section `Set`_ of the OAI-PMH standard.
+
+   ``isDeleted()``
+
+    Returns true if this item is deleted from the server, and this is
+    a delete notification.
+
+.. _Metadata:
+
+``class Metadata(..)``
+
+  ``getMap()``
+
+    Returns a dictionary with as key the metadata field names and as
+    values the metadata values, as extracted from the XML.
+
+  ``getField(name)``
+
+    Returns the metadata value for metadata field name ``name``.
+
+    There is also a dictionary API that is the equivalent of getField;
+    ``metadata[name]``.
+
+.. _ServerIdentify:
+
+``class SeverIdentify(..)``
+
+  ``repositoryName()``
+
+    Returns the human readable name of the repository.
+ 
+  ``baseURL()``
+
+    Returns the base URL for the repository (which can receive OAI-PMH
+    requests).
+
+  ``protocolVersion()``
+
+    Returns the version of the OAI-PMH protocol supported by the
+    repository.
+
+  ``earliestDatestamp()``
+
+    Returns a UTCdatetime_ that is the guaranteed earliest datestamp
+    that can occur in headers.
+
+  ``deletedRecord()``
+    
+    Returns an string indicating how the repository deals with deleted
+    records.
+
+    ``no``
+
+      The repository does not support deleted records in the
+      protocol. If records are deleted they don't appear anymore, but
+      no special information is returned about them.
+
+    ``transient`` 
+
+      Deleted records will be returned with ``isDeleted`` status in
+      the header set as true but these will not be returned forever.
+
+    ``persistent`` 
+
+      Deleted record information is stored permanently by the server
+      and will be returned with ``isDeleted`` status as true if the
+      deleted item is accessed.
+
+  ``granularity()``
+  
+    Returns either ``YYYY-MM-DD`` or ``YYYY-MM-DDThh:mm:ssZ``. This determines
+    the finest granularity of timestamps returned by the server.
+
+  ``adminEmails()``
+
+    Returns a list of one or more email addresses of server admins.
+
+  ``compression()``
+
+    Returns the compression encoding supported by the repository.
+
+  ``description()``
+
+    Not yet implemented.
+
+.. _MetadataSchema:
+
+``class MetadataSchema(metadata_prefix, namespaces)``
+
+  Instances of this class describe ways to turn an XML representation
+  of metadata into python Metadata_ instances. Fields are described by
+  a name, a type and a way to retrieve the field information (in the
+  form of a string or a list of strings) from the XML representation.
+  The latter is described by an XPath_ expression. This way other
+  metadata schemas can be represented in Python by adding a new
+  MetadataSchema to the ServerProxy_'s metadata schema registry.
+
+  ``addFieldDescription(field_name, field_type, xpath)``
+
+    Add a field description to the metadata schema. 
+
+    ``field_name``
+
+      The name of the field in the Metadata_ instances generated
+      according to this schema.
+
+    ``field_type``
+
+      A string indicating the data type of the metadata
+      field. ``bytes`` indicates an 8-bit string, ``bytesList``
+      indicates a list of such strings, ``text`` indicates a unicode
+      string and ``textList`` indicates a list of unicode strings.
+
+    ``xpath``
+
+      And XPath_ expression that is executed from the top of the
+      particular metadata section in the retrieved XML. This
+      expression indicates how to retrieve the metadata.
+
+.. _MetadataSchemaRegistry:
+ 
+``class MetadataSchemaRegistry()``
+
+  Instances of this class store a number of MetadataSchema_
+  instances. These handle metadata found in OAI-PMH XML resultsets
+  according to their ``metadata_prefix``.
+
+  ``addMetadataSchema(metadata_schema)``
+
+    Add a MetadataSchema_ instance to this registry.
+
+``header, metadata, about``
+---------------------------
+
+``header`` is a `Header`_ instance.
+
+``metadata`` is a `Metadata`_ instance if the metadataPrefix argument
+is in a registered format, or ``None`` if the metadataPrefix is not
+recognized.
+
+At the time of writing ``about`` support has not yet been implemented
+and will always be returned as ``None``.
+
+``from_`` and ``until``
+-----------------------
+
+The `from_ and until`_ arguments are optional and can be used to
+restrict the result to information about items which were added or
+modified after ``from_`` and before ``until``. ``from_`` is spelled
+with the extra ``_`` because ``from`` (without underscore) is a
+reserved keyword in Python. If only ``from_`` is used there is no
+lower limit, it only ``until`` is used there is no upper limit. Both
+arguments should be strings in OAI-PMH datestamp format
+(i.e. ``YYY-MM-DDDThh:mm:ssZ``). See the `UTCdatetime`_ section of
+the OAI-PMH standard for more information.
+
+lazy sequence
+-------------
+
+The list is *lazy* in that while you can loop through it, it behaves
+more like an iterator than a real list (it would be a real Python 2.2+
+iterator if Python 2.1 did not need to be supported by this
+module). The system automatically asks for the next resumptionToken if
+one was in the reply. While you can explicitly pass a resumptionToken
+this is therefore not very useful as the lazy lists take care of
+resumptionTokens automatically.
+
+The optional ``max`` argument is not part of the OAI-PMH protocol, but
+a coarse way to control how many items are read before stopping. If
+the amount of items exceeds ``max`` after reading a resumptionToken,
+the method will halt.
+
+.. _OAI-PMH protocol: http://www.openarchives.org/OAI/openarchivesprotocol.html
+
+.. _Protocol Requests and Responses: http://www.openarchives.org/OAI/openarchivesprotocol.html#ProtocolMessages
+
+.. _UTCdatetime: http://www.openarchives.org/OAI/openarchivesprotocol.html#Dates
+
+.. _Set: http://www.openarchives.org/OAI/openarchivesprotocol.html#Set 
+
+.. _XPath: http://www.w3.org/TR/xpath

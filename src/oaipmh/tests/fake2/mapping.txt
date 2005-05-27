@@ -1,0 +1,6 @@
+identifier=hdl%3A1765%2F1160&metadataPrefix=oai_dc&verb=GetRecord
+00000.xml
+identifier=hdl%3A1765%2F1162&metadataPrefix=oai_dc&verb=GetRecord
+00001.xml
+from=2004-01-01&metadataPrefix=oai_dc&verb=ListRecords
+00002.xml

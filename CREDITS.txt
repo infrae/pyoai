@@ -1,0 +1,21 @@
+Copyright (c) 2003, 2004, 2005 Infrae. All rights reserved.
+See also LICENSE.txt
+
+The oaipmh module for Python is developed by Infrae
+(http://www.infrae.com). Initial development was for the Erasmus
+University of Rotterdam library (http://www.eur.nl,
+http://eps.eur.nl).
+
+Infrae oaipmh module developers:
+
+  Martijn Faassen <faassen@infrae.com>
+  Eric Casteleijn <eric@infrae.com>
+
+Thanks to:
+
+  Thom Hickey for critical discussion of the source code.
+
+  Thijs Janssen for a bug report.
+
+Many thanks go to Henk Ellermann at the library of Erasmus University
+Rotterdam for making this development possible.

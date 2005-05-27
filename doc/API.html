@@ -1,0 +1,273 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<meta name="generator" content="Docutils 0.2.9: http://docutils.sourceforge.net/" />
+<title>Python oaipmh module</title>
+<link rel="stylesheet" href="oai.css" type="text/css" />
+</head>
+<body>
+<div class="document" id="python-oaipmh-module">
+<h1 class="title">Python oaipmh module</h1>
+<div class="section" id="introduction">
+<h1><a name="introduction">Introduction</a></h1>
+<p>The oaipmh module implements the <a class="reference" href="http://www.openarchives.org/OAI/openarchivesprotocol.html">OAI-PMH protocol</a>. It encapsulates
+this protocol in Python, so that a request to the OAI-PMH server is
+just a method call from the Python perspective. The XML data that is
+returned from the server is processed as well, and returned as Python
+objects.</p>
+</div>
+<div class="section" id="api">
+<h1><a name="api">API</a></h1>
+<a class="target" id="serverproxy" name="serverproxy"></a><p><tt class="literal"><span class="pre">class</span> <span class="pre">ServerProxy(uri</span> <span class="pre">[,</span> <span class="pre">metadataSchemaRegistry])</span></tt></p>
+<blockquote>
+<p>A ServerProxy instance is an object that manages communication with
+the remote OAI-PMH server. The required first argument is the URI
+that accepts OAI-PMH requests.</p>
+<p>The second optional argument is a <a class="reference" href="#metadataschemaregistry">MetadataSchemaRegistry</a>
+instance. This registry contains the metadata schemas that are
+understood by client. If it isn't supplied, a default and global
+schema registry will be used, with at least support for the
+<tt class="literal"><span class="pre">oai_dc</span></tt> metadata scheme.</p>
+<p>The returned instance is a proxy object with methods that can be
+used to invoke the corresponding OAI-PMH requests to the server. The
+methods are named after the corresponding verbs of the OAI-PMH
+protocol, though start with a lowercase letter to follow Python
+camelCase conventions.</p>
+<p>The methods take zero or more keyword arguments; non-keyword
+arguments are not supported. The methods do some automatic checking
+to determine whether the right combination of arguments is used.</p>
+<p>The section <a class="reference" href="http://www.openarchives.org/OAI/openarchivesprotocol.html#ProtocolMessages">Protocol Requests and Responses</a> of the OAI-PMH
+standard describes the verbs (and thus methods) and the allowed
+arguments combinations.</p>
+<p><tt class="literal"><span class="pre">getRecord(identifier,</span> <span class="pre">metadataPrefix)</span></tt></p>
+<blockquote>
+Returns a <a class="reference" href="#header-metadata-about">header, metadata, about</a> tuple for the identified item.</blockquote>
+<p><tt class="literal"><span class="pre">identify()</span></tt></p>
+<blockquote>
+Get server identification information. This returns a
+<a class="reference" href="#serveridentify">ServerIdentify</a> instance.</blockquote>
+<p><tt class="literal"><span class="pre">listIdentifiers(metadataPrefix</span> <span class="pre">[,</span> <span class="pre">from_</span> <span class="pre">[,</span> <span class="pre">until</span> <span class="pre">[,</span> <span class="pre">set</span> <span class="pre">[,</span> <span class="pre">resumptionToken</span> <span class="pre">[,</span> <span class="pre">max]]]]])</span></tt></p>
+<blockquote>
+<p>Returns a <a class="reference" href="#lazy-sequence">lazy sequence</a> of <a class="reference" href="#header">Header</a> instances.</p>
+<p>The result can be restricted using  <a class="reference" href="#from-and-until">from_ and until</a> arguments.</p>
+<p>The result can be restricted for one particular set.</p>
+</blockquote>
+<p><tt class="literal"><span class="pre">listMetadataFormats([identifier])</span></tt></p>
+<blockquote>
+<p>If <tt class="literal"><span class="pre">identifier</span></tt> is not specified, returns a list of
+<tt class="literal"><span class="pre">metadataPrefix,</span> <span class="pre">schema,</span> <span class="pre">metadataNamespace</span></tt> tuples for this
+OAI-PMH repository.</p>
+<p>If <tt class="literal"><span class="pre">identifier</span></tt> is specified, returns a list of tuples for the
+metadata associated with the identified item.</p>
+<p><tt class="literal"><span class="pre">metadataPrefix</span></tt> is a short string to uniquely identify the
+metadata format for this OAI-PMH repository.</p>
+<p><tt class="literal"><span class="pre">schema</span></tt> is a URI to the XML schema describing the metadata
+format.</p>
+<p><tt class="literal"><span class="pre">metadataNamespace</span></tt> is a namespace URI used for to identify XML
+content in this metadata format.</p>
+</blockquote>
+<p><tt class="literal"><span class="pre">listRecords(metadataPrefix</span> <span class="pre">[,</span> <span class="pre">from_</span> <span class="pre">[,</span> <span class="pre">until</span> <span class="pre">[,</span> <span class="pre">set</span> <span class="pre">[,</span> <span class="pre">resumptionToken</span> <span class="pre">[,</span> <span class="pre">max]]]]])</span></tt></p>
+<blockquote>
+<p>Returns a <a class="reference" href="#lazy-sequence">lazy sequence</a> of <a class="reference" href="#header-metadata-about">header, metadata, about</a> tuples
+for items in the repository.</p>
+<p>The result can be restricted using  <a class="reference" href="#from-and-until">from_ and until</a> arguments.</p>
+<p>The result can be restricted for one particular set.</p>
+</blockquote>
+<p><tt class="literal"><span class="pre">listSets([resumptionToken</span> <span class="pre">[,</span> <span class="pre">max]])</span></tt></p>
+<blockquote>
+<p>Returns a <a class="reference" href="#lazy-sequence">lazy sequence</a> of <tt class="literal"><span class="pre">setSpec,</span> <span class="pre">setName,</span> <span class="pre">setDescription</span></tt>
+tuples.</p>
+<p><tt class="literal"><span class="pre">setSpec</span></tt> is the repository-unique name of a set. It may be
+partioned into a hierarchy using a colon. See the section <a class="reference" href="http://www.openarchives.org/OAI/openarchivesprotocol.html#Set">Set</a>
+of the OAI-PMH standard for more information.</p>
+<p><tt class="literal"><span class="pre">setName</span></tt> is the name of the set as it should be displayed to
+end-users.</p>
+<p>At the of writing <tt class="literal"><span class="pre">setDescription</span></tt> is not yet supported by the
+oaipmh module, and this element of the tuple will always be <tt class="literal"><span class="pre">None</span></tt>.</p>
+</blockquote>
+<p>The following methods pertain to the metadata schema system.</p>
+<p><tt class="literal"><span class="pre">addMetadataSchema(schema)</span></tt></p>
+<blockquote>
+Add a <a class="reference" href="#metadataschema">MetadataSchema</a> instance to the <a class="reference" href="#serverproxy">ServerProxy</a>. The server
+will then be able to create <a class="reference" href="#metadata">Metadata</a> instances for metadata in
+the format handled by the <a class="reference" href="#metadataschema">MetadataSchema</a> instance.</blockquote>
+<p><tt class="literal"><span class="pre">getMetadataSchemaRegistry()</span></tt></p>
+<blockquote>
+Get the <a class="reference" href="#metadataschemaregistry">MetadataSchemaRegistry</a> instance that handles metadata
+for this <a class="reference" href="#serverproxy">ServerProxy</a> instance.</blockquote>
+</blockquote>
+<a class="target" id="header" name="header"></a><p><tt class="literal"><span class="pre">class</span> <span class="pre">Header(..)</span></tt></p>
+<blockquote>
+<p><tt class="literal"><span class="pre">identifier()</span></tt></p>
+<blockquote>
+<p>Returns the unique identifier of this item in this repository. The
+identifier must be in URI form. Some repositories may for instance
+implement this as handles (see www.handle.net).</p>
+<p>See the <a class="reference" href="http://www.openarchives.org/OAI/openarchivesprotocol.html#UniqueIdentifier">Unique Identifier</a> section of the OAI-PMH standard for
+more information.</p>
+</blockquote>
+<p><tt class="literal"><span class="pre">datestamp()</span></tt></p>
+<blockquote>
+Returns the time at which this item was added or last updated
+within the repository. This is in string form, in <a class="reference" href="http://www.openarchives.org/OAI/openarchivesprotocol.html#Dates">UTCdatetime</a>
+format.</blockquote>
+<p><tt class="literal"><span class="pre">setSpec()</span></tt></p>
+<blockquote>
+<blockquote>
+Returns a list of the sets this item is in. The object may be in
+zero or more sets. Sets are represented as strings. See also the
+section <a class="reference" href="http://www.openarchives.org/OAI/openarchivesprotocol.html#Set">Set</a> of the OAI-PMH standard.</blockquote>
+<p><tt class="literal"><span class="pre">isDeleted()</span></tt></p>
+<blockquote>
+Returns true if this item is deleted from the server, and this is
+a delete notification.</blockquote>
+</blockquote>
+</blockquote>
+<a class="target" id="metadata" name="metadata"></a><p><tt class="literal"><span class="pre">class</span> <span class="pre">Metadata(..)</span></tt></p>
+<blockquote>
+<p><tt class="literal"><span class="pre">getMap()</span></tt></p>
+<blockquote>
+Returns a dictionary with as key the metadata field names and as
+values the metadata values, as extracted from the XML.</blockquote>
+<p><tt class="literal"><span class="pre">getField(name)</span></tt></p>
+<blockquote>
+<p>Returns the metadata value for metadata field name <tt class="literal"><span class="pre">name</span></tt>.</p>
+<p>There is also a dictionary API that is the equivalent of getField;
+<tt class="literal"><span class="pre">metadata[name]</span></tt>.</p>
+</blockquote>
+</blockquote>
+<a class="target" id="serveridentify" name="serveridentify"></a><p><tt class="literal"><span class="pre">class</span> <span class="pre">SeverIdentify(..)</span></tt></p>
+<blockquote>
+<p><tt class="literal"><span class="pre">repositoryName()</span></tt></p>
+<blockquote>
+Returns the human readable name of the repository.</blockquote>
+<p><tt class="literal"><span class="pre">baseURL()</span></tt></p>
+<blockquote>
+Returns the base URL for the repository (which can receive OAI-PMH
+requests).</blockquote>
+<p><tt class="literal"><span class="pre">protocolVersion()</span></tt></p>
+<blockquote>
+Returns the version of the OAI-PMH protocol supported by the
+repository.</blockquote>
+<p><tt class="literal"><span class="pre">earliestDatestamp()</span></tt></p>
+<blockquote>
+Returns a <a class="reference" href="http://www.openarchives.org/OAI/openarchivesprotocol.html#Dates">UTCdatetime</a> that is the guaranteed earliest datestamp
+that can occur in headers.</blockquote>
+<p><tt class="literal"><span class="pre">deletedRecord()</span></tt></p>
+<blockquote>
+<p>Returns an string indicating how the repository deals with deleted
+records.</p>
+<p><tt class="literal"><span class="pre">no</span></tt></p>
+<blockquote>
+The repository does not support deleted records in the
+protocol. If records are deleted they don't appear anymore, but
+no special information is returned about them.</blockquote>
+<p><tt class="literal"><span class="pre">transient</span></tt></p>
+<blockquote>
+Deleted records will be returned with <tt class="literal"><span class="pre">isDeleted</span></tt> status in
+the header set as true but these will not be returned forever.</blockquote>
+<p><tt class="literal"><span class="pre">persistent</span></tt></p>
+<blockquote>
+Deleted record information is stored permanently by the server
+and will be returned with <tt class="literal"><span class="pre">isDeleted</span></tt> status as true if the
+deleted item is accessed.</blockquote>
+</blockquote>
+<p><tt class="literal"><span class="pre">granularity()</span></tt></p>
+<blockquote>
+Returns either <tt class="literal"><span class="pre">YYYY-MM-DD</span></tt> or <tt class="literal"><span class="pre">YYYY-MM-DDThh:mm:ssZ</span></tt>. This determines
+the finest granularity of timestamps returned by the server.</blockquote>
+<p><tt class="literal"><span class="pre">adminEmails()</span></tt></p>
+<blockquote>
+Returns a list of one or more email addresses of server admins.</blockquote>
+<p><tt class="literal"><span class="pre">compression()</span></tt></p>
+<blockquote>
+Returns the compression encoding supported by the repository.</blockquote>
+<p><tt class="literal"><span class="pre">description()</span></tt></p>
+<blockquote>
+Not yet implemented.</blockquote>
+</blockquote>
+<a class="target" id="metadataschema" name="metadataschema"></a><p><tt class="literal"><span class="pre">class</span> <span class="pre">MetadataSchema(metadata_prefix,</span> <span class="pre">namespaces)</span></tt></p>
+<blockquote>
+<p>Instances of this class describe ways to turn an XML representation
+of metadata into python <a class="reference" href="#metadata">Metadata</a> instances. Fields are described by
+a name, a type and a way to retrieve the field information (in the
+form of a string or a list of strings) from the XML representation.
+The latter is described by an <a class="reference" href="http://www.w3.org/TR/xpath">XPath</a> expression. This way other
+metadata schemas can be represented in Python by adding a new
+MetadataSchema to the <a class="reference" href="#serverproxy">ServerProxy</a>'s metadata schema registry.</p>
+<p><tt class="literal"><span class="pre">addFieldDescription(field_name,</span> <span class="pre">field_type,</span> <span class="pre">xpath)</span></tt></p>
+<blockquote>
+<p>Add a field description to the metadata schema.</p>
+<p><tt class="literal"><span class="pre">field_name</span></tt></p>
+<blockquote>
+The name of the field in the <a class="reference" href="#metadata">Metadata</a> instances generated
+according to this schema.</blockquote>
+<p><tt class="literal"><span class="pre">field_type</span></tt></p>
+<blockquote>
+A string indicating the data type of the metadata
+field. <tt class="literal"><span class="pre">bytes</span></tt> indicates an 8-bit string, <tt class="literal"><span class="pre">bytesList</span></tt>
+indicates a list of such strings, <tt class="literal"><span class="pre">text</span></tt> indicates a unicode
+string and <tt class="literal"><span class="pre">textList</span></tt> indicates a list of unicode strings.</blockquote>
+<p><tt class="literal"><span class="pre">xpath</span></tt></p>
+<blockquote>
+And <a class="reference" href="http://www.w3.org/TR/xpath">XPath</a> expression that is executed from the top of the
+particular metadata section in the retrieved XML. This
+expression indicates how to retrieve the metadata.</blockquote>
+</blockquote>
+</blockquote>
+<a class="target" id="metadataschemaregistry" name="metadataschemaregistry"></a><p><tt class="literal"><span class="pre">class</span> <span class="pre">MetadataSchemaRegistry()</span></tt></p>
+<blockquote>
+<p>Instances of this class store a number of <a class="reference" href="#metadataschema">MetadataSchema</a>
+instances. These handle metadata found in OAI-PMH XML resultsets
+according to their <tt class="literal"><span class="pre">metadata_prefix</span></tt>.</p>
+<p><tt class="literal"><span class="pre">addMetadataSchema(metadata_schema)</span></tt></p>
+<blockquote>
+Add a <a class="reference" href="#metadataschema">MetadataSchema</a> instance to this registry.</blockquote>
+</blockquote>
+<div class="section" id="header-metadata-about">
+<h2><a name="header-metadata-about"><tt class="literal"><span class="pre">header,</span> <span class="pre">metadata,</span> <span class="pre">about</span></tt></a></h2>
+<p><tt class="literal"><span class="pre">header</span></tt> is a <a class="reference" href="#header">Header</a> instance.</p>
+<p><tt class="literal"><span class="pre">metadata</span></tt> is a <a class="reference" href="#metadata">Metadata</a> instance if the metadataPrefix argument
+is in a registered format, or <tt class="literal"><span class="pre">None</span></tt> if the metadataPrefix is not
+recognized.</p>
+<p>At the time of writing <tt class="literal"><span class="pre">about</span></tt> support has not yet been implemented
+and will always be returned as <tt class="literal"><span class="pre">None</span></tt>.</p>
+</div>
+<div class="section" id="from-and-until">
+<h2><a name="from-and-until"><tt class="literal"><span class="pre">from_</span></tt> and <tt class="literal"><span class="pre">until</span></tt></a></h2>
+<p>The <a class="reference" href="#from-and-until">from_ and until</a> arguments are optional and can be used to
+restrict the result to information about items which were added or
+modified after <tt class="literal"><span class="pre">from_</span></tt> and before <tt class="literal"><span class="pre">until</span></tt>. <tt class="literal"><span class="pre">from_</span></tt> is spelled
+with the extra <tt class="literal"><span class="pre">_</span></tt> because <tt class="literal"><span class="pre">from</span></tt> (without underscore) is a
+reserved keyword in Python. If only <tt class="literal"><span class="pre">from_</span></tt> is used there is no
+lower limit, it only <tt class="literal"><span class="pre">until</span></tt> is used there is no upper limit. Both
+arguments should be strings in OAI-PMH datestamp format
+(i.e. <tt class="literal"><span class="pre">YYY-MM-DDDThh:mm:ssZ</span></tt>). See the <a class="reference" href="http://www.openarchives.org/OAI/openarchivesprotocol.html#Dates">UTCdatetime</a> section of
+the OAI-PMH standard for more information.</p>
+</div>
+<div class="section" id="lazy-sequence">
+<h2><a name="lazy-sequence">lazy sequence</a></h2>
+<p>The list is <em>lazy</em> in that while you can loop through it, it behaves
+more like an iterator than a real list (it would be a real Python 2.2+
+iterator if Python 2.1 did not need to be supported by this
+module). The system automatically asks for the next resumptionToken if
+one was in the reply. While you can explicitly pass a resumptionToken
+this is therefore not very useful as the lazy lists take care of
+resumptionTokens automatically.</p>
+<p>The optional <tt class="literal"><span class="pre">max</span></tt> argument is not part of the OAI-PMH protocol, but
+a coarse way to control how many items are read before stopping. If
+the amount of items exceeds <tt class="literal"><span class="pre">max</span></tt> after reading a resumptionToken,
+the method will halt.</p>
+</div>
+</div>
+</div>
+<hr class="footer"/>
+<div class="footer">
+<a class="reference" href="API.txt">View document source</a>.
+Generated on: 2003-06-17 17:05 UTC.
+Generated by <a class="reference" href="http://docutils.sourceforge.net/">Docutils</a> from <a class="reference" href="http://docutils.sourceforge.net/rst.html">reStructuredText</a> source.
+</div>
+</body>
+</html>
