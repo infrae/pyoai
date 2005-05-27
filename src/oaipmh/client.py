@@ -400,7 +400,7 @@ class BaseServerProxy:
         self._ignore_bad_character_hack = true_or_false 	 
 
     def parse(self, xml): 	 
-        """Parse the XML to a libxml2 DOM tree. 	 
+        """Parse the XML to a lxml tree. 	 
         """
         # XXX this is only safe for UTF-8 encoded content, 	 
         # and we're basically hacking around non-wellformedness anyway,
