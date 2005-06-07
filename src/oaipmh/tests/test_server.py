@@ -1,9 +1,16 @@
-
 import unittest
+import os
 from oaipmh import server, client, common
 from lxml import etree
 
 NS_OAIPMH = server.NS_OAIPMH
+
+def fileInTestDir(name):
+    _testdir = os.path.split(__file__)[0]
+    return os.path.join(_testdir, name)
+
+# load up schema
+oaischema = etree.XMLSchema(etree.parse(fileInTestDir('OAI-PMH.xsd')))
 
 class ClientServerProxy(client.BaseServerProxy):
     """A proxy that connects directly to a server object.
@@ -30,8 +37,9 @@ class ServerTestCase(unittest.TestCase):
             ['faassen@infrae.com'])
         
         xml_server = server.XMLServer(simple_server)
-        print xml_server.identify()
-    
+        tree = xml_server.identify_tree()
+        self.assert_(oaischema.validate(tree))
+        
         #element = etree.Element('top')
         #header = common.Header(
         #    'foo', '2003-04-29T15:57:01Z', ['a', 'b'], False)

@@ -1,5 +1,5 @@
 from oaipmh.common import Header, Metadata, ServerIdentify
-from lxml.etree import Element, SubElement
+from lxml.etree import ElementTree, Element, SubElement
 from lxml import etree
 
 NS_OAIPMH = 'http://www.openarchives.org/OAI/2.0/'
@@ -12,6 +12,8 @@ class Server:
 
     Implement this interface (possibly subclassing this one) for your
     backend.
+
+    A client ServerProxy can also stand in for a server.
     """
     def __init__(self, repositoryName, baseURL, adminEmails=None):
         self._repositoryName = repositoryName
@@ -63,10 +65,13 @@ class XMLServer:
     def getRecord(self, identifier, metadataPrefix):
         pass
     
-    def identify(self):
+    def identify(self):     
+        return etree.tostring(self.identify_tree().getroot())
+
+    def identify_tree(self):
         envelope = self._outputEnvelope(verb='Identify')
-        self._outputIdentify(envelope, self._server.identify())
-        return etree.tostring(envelope)
+        self._outputIdentify(envelope.getroot(), self._server.identify())
+        return envelope
     
     def listIdentifiers(self, metadataPrefix, from_=None, until=None, set=None,
                         resumptionToken=None):
@@ -85,36 +90,40 @@ class XMLServer:
 
     def _outputEnvelope(self, **kw):
         e_oaipmh = Element(nsoai('OAI-PMH'), ns_resolver=ns_resolver)
+        e_tree = ElementTree(element=e_oaipmh)
         e_oaipmh.set('{%s}schemaLocation' % NS_XSI,
                      ('http://www.openarchives.org/OAI/2.0/ '
                       'http://www.openarchives.org/OAI/2.0/OAI-PMH.xsd'))
         e_responseDate = SubElement(e_oaipmh, nsoai('responseDate'))
         # XXX fill in right date
-        e_responseDate.text = 'fake-date'
+        e_responseDate.text = '2005-05-01T17:00:00'
         e_request = SubElement(e_oaipmh, nsoai('request'))
         # XXX shouldn't output this if we had an error
         for key, value in kw.items():
             e_request.set(key, value)
         e_request.text = self._server.baseURL()
-        return e_oaipmh
+        return e_tree
 
     def _outputIdentify(self, tree, identify):
         e_identify = SubElement(tree, nsoai('Identify'))
-        e_repositoryName = SubElement(e_identify, nsoai('responsitoryName'))
+        e_repositoryName = SubElement(e_identify, nsoai('repositoryName'))
         e_repositoryName.text = identify.repositoryName()
+        e_baseURL = SubElement(e_identify, nsoai('baseURL'))
+        e_baseURL.text = identify.baseURL()
         e_protocolVersion = SubElement(e_identify, nsoai('protocolVersion'))
-        e_protocolVersion = identify.protocolVersion()
+        e_protocolVersion.text = identify.protocolVersion()
+        for adminEmail in identify.adminEmails():
+            e = SubElement(e_identify, nsoai('adminEmail'))
+            e.text = adminEmail
         e_earliestDatestamp = SubElement(e_identify,
                                          nsoai('earliestDatestamp'))
-        e_earliestDatestamp.text = identify.earliestDatestamp()
+        # XXX fake
+        e_earliestDatestamp.text = '1990-02-01T12:00:00Z' # identify.earliestDatestamp()
         e_deletedRecord = SubElement(e_identify,
                                      nsoai('deletedRecord'))
         e_deletedRecord.text = identify.deletedRecord()
         e_granularity = SubElement(e_identify, nsoai('granularity'))
         e_granularity.text = identify.granularity()
-        for adminEmail in identify.adminEmails():
-            e = SubElement(e_identify, nsoai('adminEmail'))
-            e.text = adminEmail
         if identify.compression() != 'identity':
             e_compression = SubElement(e_identify, nsoai('compression'))
             e_compression.text = identify.compression()        
