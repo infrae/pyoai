@@ -8,7 +8,7 @@ from types import SliceType
 from lxml import etree
 import time
 
-from oaipmh.common import Header, Metadata, ServerIdentify
+from oaipmh import common
 
 WAIT_DEFAULT = 120 # two minutes
 WAIT_MAX = 5
@@ -61,7 +61,7 @@ class MetadataSchema:
             else:
                 raise Error, "Unknown field type: %s" % field_type
             map[field_name] = value
-        return Metadata(map)
+        return common.Metadata(map)
 
     def getMetadataPrefix(self):
         return self._metadata_prefix
@@ -69,10 +69,11 @@ class MetadataSchema:
 def buildHeader(header_node, namespaces):
     e = etree.XPathEvaluator(header_node, namespaces).evaluate
     identifier = str(e('string(oai:identifier/text())'))
-    datestamp = str(e('string(oai:datestamp/text())'))
+    datestamp = common.datestamp_to_datetime(
+        str(e('string(oai:datestamp/text())')))
     setspec = [str(s) for s in e('oai:setSpec/text()')]
     deleted = e("@status = 'deleted'") 
-    return Header(identifier, datestamp, setspec, deleted)
+    return common.Header(identifier, datestamp, setspec, deleted)
 
 def buildRecords(server, metadata_prefix, namespaces, schema_registry, xml):
     tree = server.parse(xml)
@@ -166,14 +167,15 @@ def Identify(server, args, xml):
     baseURL = e('string(oai:baseURL/text())')
     protocolVersion = e('string(oai:protocolVersion/text())')
     adminEmails = e('oai:adminEmail/text()')
-    earliestDatestamp = e('string(oai:earliestDatestamp/text())')
+    earliestDatestamp = common.datestamp_to_datetime(
+        e('string(oai:earliestDatestamp/text())'))
     deletedRecord = e('string(oai:deletedRecord/text())')
     granularity = e('string(oai:granularity/text())')
     compression = e('oai:compression/text()')
     # XXX description
-    identify = ServerIdentify(repositoryName, baseURL, protocolVersion,
-                              adminEmails, earliestDatestamp,
-                              deletedRecord, granularity, compression)
+    identify = common.ServerIdentify(repositoryName, baseURL, protocolVersion,
+                                     adminEmails, earliestDatestamp,
+                                     deletedRecord, granularity, compression)
     return identify
 
 def ResumptionListGenerator(firstBatch, nextBatch):

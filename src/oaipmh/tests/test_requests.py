@@ -2,6 +2,7 @@ from unittest import TestCase, TestSuite, main, makeSuite
 from fakeserver import FakeServerProxy
 import os
 from oaipmh.client import register_oai_dc
+from datetime import datetime
 
 directory = os.path.dirname(__file__)
 fake1 = os.path.join(directory, 'fake1')
@@ -57,7 +58,7 @@ class RequestTestCase(TestCase):
             'hdl:1765/308',
             header.identifier())
         self.assertEquals(
-            '2003-04-15T10:18:51Z',
+            datetime(2003, 4, 15, 10, 18, 51),
             header.datestamp())
         self.assertEquals(
             ['1:2'],
@@ -75,8 +76,8 @@ class RequestTestCase(TestCase):
             'hdl:1765/308',
             header.identifier())
         self.assertEquals(
-            '2003-04-15T10:18:51Z',
-            header.datestamp())
+            datetime(2003, 4, 15, 10, 18, 51),
+             header.datestamp())
         self.assertEquals(
             ['1:2'],
             header.setSpec())

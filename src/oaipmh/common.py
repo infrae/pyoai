@@ -1,3 +1,5 @@
+import datetime
+
 class Header:
     def __init__(self, identifier, datestamp, setspec, deleted):
         self._identifier = identifier
@@ -65,3 +67,23 @@ class ServerIdentify:
 
     def compression(self):
         return self._compression
+
+def datetime_to_datestamp(dt):
+    return dt.isoformat() + 'Z'
+    
+def datestamp_to_datetime(datestamp):
+    splitted = datestamp.split('T')
+    if len(splitted) == 2:
+        d, t = splitted
+        # strip off 'Z'
+        t = t[:-1]
+    else:
+        d = splitted[0]
+        t = '00:00:00'
+    YYYY, MM, DD = d.split('-')
+    hh, mm, ss = t.split(':')
+    return datetime.datetime(
+        int(YYYY), int(MM), int(DD),
+        int(hh), int(mm), int(ss))
+
+        

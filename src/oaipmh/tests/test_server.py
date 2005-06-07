@@ -2,6 +2,8 @@ import unittest
 import os
 from oaipmh import server, client, common
 from lxml import etree
+from datetime import datetime
+import fakeserver
 
 NS_OAIPMH = server.NS_OAIPMH
 
@@ -26,25 +28,32 @@ class ClientServerProxy(client.BaseServerProxy):
         verb = kw.pop('verb')
         verb = verb[0].lower() + verb[1:]
         return getattr(self._server, verb)(**kw)
-        
+
+class SimpleServer(server.Server):
+    def _getEarliestDatestamp(self):
+        return datetime(1953, 1, 1, 0, 0)
+
 class ServerTestCase(unittest.TestCase):
-    def setUp(self):
-        pass # serlf.server = MyServer()
         
-    def test_output(self):
-        simple_server = server.Server(
+    def test_identify(self):
+        simple_server = SimpleServer(
             'TestRepository', 'http://www.infrae.com/oai',
             ['faassen@infrae.com'])
         
         xml_server = server.XMLServer(simple_server)
         tree = xml_server.identify_tree()
         self.assert_(oaischema.validate(tree))
+        #etree.dump(tree.getroot())
         
-        #element = etree.Element('top')
-        #header = common.Header(
-        #    'foo', '2003-04-29T15:57:01Z', ['a', 'b'], False)
-        #server.outputHeader(element, header)
-        #etree.dump(element)
+    def test_identify2(self):
+        directory = os.path.dirname(__file__)
+        fake1 = os.path.join(directory, 'fake1')
+        myserver = fakeserver.FakeServerProxy(fake1)
+
+        xml_server = server.XMLServer(myserver)
+        tree = xml_server.identify_tree()
+        self.assert_(oaischema.validate(tree))
+        #etree.dump(tree.getroot())
         
     def test_two(self):
         pass
