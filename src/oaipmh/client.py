@@ -245,49 +245,18 @@ def ListSets(server, args, xml):
         return buildSets(server, namespaces, xml)
     return ResumptionListGenerator(firstBatch, nextBatch)
 
-class OAIMethodError(Exception):
-    pass
-
 class OAIMethodImpl:
     def __init__(self, verb, argspec, factory):
         self._factory = factory
         self._verb = verb
-        self._argspec = argspec
-        self._exclusive = None
-        for arg_name, arg_type in argspec.items():
-            if arg_type == 'exclusive':
-                self._exclusive = arg_name
-
-    def _processArguments(self, dict):
-        argspec = self._argspec
-        # first filter out any local arguments, which will be returned
-        local = {}
-        for key, value in argspec.items():
-            if value == 'local' and dict.has_key(key):
-                local[key] = dict[key]
-                del dict[key]
-        # check if we have unknown arguments
-        for key, value in dict.items():
-            if not argspec.has_key(key):
-                raise OAIMethodError, "Unknown argument: %s" % key
-        # first investigate if we have exclusive argument
-        if dict.has_key(self._exclusive):
-            if len(dict) > 1:
-                raise OAIMethodError, "Exclusive argument %s is used but other arguments found." % self._exclusive
-            return
-        # if not exclusive, check for required
-        for arg_name, arg_type in argspec.items(): 
-            if arg_type == 'required':
-                if not dict.has_key(arg_name):
-                    raise OAIMethodError, "Argument required but not found: %s" % arg_name
-        return local
-    
+        self._validator = common.ArgumentValidator(argspec)
+        
     def __call__(self, bound_self, **kw):
         # deal with 'from' (python keyword)
         if kw.has_key('from_'):
             kw['from'] = kw['from_']
             del kw['from_']
-        local = self._processArguments(kw)
+        local = self._validator.validate(kw)
         kw['verb'] = self._verb
         # reconstruct all arguments XXX hack
         args = kw.copy()

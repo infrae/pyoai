@@ -86,4 +86,42 @@ def datestamp_to_datetime(datestamp):
         int(YYYY), int(MM), int(DD),
         int(hh), int(mm), int(ss))
 
-        
+class ArgumentValidationError(Exception):
+    pass
+
+class ArgumentValidator:
+    
+    def __init__(self, argspec):
+        self._argspec = argspec
+        self._exclusive = None
+        for arg_name, arg_type in argspec.items():
+            if arg_type == 'exclusive':
+                self._exclusive = arg_name
+
+    def validate(self, dict):
+        argspec = self._argspec
+        # first filter out any local arguments, which will be returned
+        local = {}
+        for arg_name, arg_type in argspec.items():
+            if arg_type == 'local' and dict.has_key(arg_name):
+                local[arg_name] = dict[arg_name]
+                del dict[arg_name]
+        # check if we have unknown arguments
+        for key, value in dict.items():
+            if not argspec.has_key(key):
+                msg = "Unknown argument: %s" % key
+                raise ArgumentValidationError, msg
+        # first investigate if we have exclusive argument
+        if dict.has_key(self._exclusive):
+            if len(dict) > 1:
+                msg = ("Exclusive argument %s is used but other "
+                       "arguments found." % self._exclusive)
+                raise ArgumentValidationError, msg
+            return local
+        # if not exclusive, check for required
+        for arg_name, arg_type in argspec.items(): 
+            if arg_type == 'required':
+                msg = "Argument required but not found: %s" % arg_name
+                if not dict.has_key(arg_name):
+                    raise ArgumentValidationError, msg 
+        return local
