@@ -125,3 +125,78 @@ class ArgumentValidator:
                 if not dict.has_key(arg_name):
                     raise ArgumentValidationError, msg 
         return local
+
+class OAIMethodImpl(object):
+    def __init__(self, verb, argspec):
+        self._verb = verb
+        self._validator = ArgumentValidator(argspec)
+
+    def __call__(self, bound_self, **kw):
+        if kw.has_key('from_'):
+            kw['from'] = kw['from_']
+            del kw['from_']
+        local = self._validator.validate(kw)
+        kw['verb'] = self._verb
+        # reconstruct all arguments (including local)
+        args = kw.copy()
+        args.update(local)
+        # now call handler
+        return bound_self.handleVerb(self._verb, args, kw)
+
+def OAIMethod(verb, argspec):
+    obj = OAIMethodImpl(verb, argspec)
+    def method(self, **kw):
+        return obj(self, **kw)
+    return method
+
+class ValidatingOAIPMH:
+    """Implements the OAI-PMH interface.
+
+    It validates method calls and passes them on to the 'handleVerb'
+    method, which should be overridden in a subclass.
+    """
+
+    def handleVerb(self, verb, args, kw):
+        raise NotImplementedError
+    
+    getRecord = OAIMethod(
+        'GetRecord',
+        {'identifier':'required',
+        'metadataPrefix':'required'},
+        )
+    
+    identify = OAIMethod(
+        'Identify',
+        {},
+        )
+
+    listIdentifiers = OAIMethod(
+        'ListIdentifiers',
+        {'from':'optional',
+         'until':'optional',
+         'metadataPrefix':'required',
+         'set':'optional',
+         'resumptionToken':'exclusive',
+         },
+        )
+
+    listMetadataFormats = OAIMethod(
+        'ListMetadataFormats',
+        {'identifier':'optional'},
+        )
+
+    listRecords = OAIMethod(
+        'ListRecords',
+        {'from':'optional',
+         'until':'optional',
+         'set':'optional',
+         'resumptionToken':'exclusive',
+         'metadataPrefix':'required',
+         },
+        )
+
+    listSets = OAIMethod(
+        'ListSets',
+        {'resumptionToken':'exclusive',
+         },
+        )

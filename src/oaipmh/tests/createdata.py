@@ -1,12 +1,12 @@
-from fakeserver import FakeCreaterServerProxy
+from fakeclient import FakeCreaterClient
 
 # tied to the server at EUR..
-server = FakeCreaterServerProxy(
+client = FakeCreaterClient(
     'http://dspace.ubib.eur.nl/oai/',
     '/home/faassen/py/oai/tests/fake2')
 
 print "GetRecord"
-header, metadata, about = server.getRecord(
+header, metadata, about = client.getRecord(
     metadataPrefix='oai_dc', identifier='hdl:1765/315')
 print "identifier:", header.identifier()
 print "datestamp:", header.datestamp()
@@ -15,7 +15,7 @@ print "isDeleted:", header.isDeleted()
 print
 
 print "Identify"
-identify = server.identify()
+identify = client.identify()
 print "repositoryName:", identify.repositoryName()
 print "baseURL:", identify.baseURL()
 print "protocolVerson:", identify.protocolVersion()
@@ -27,7 +27,7 @@ print "compression:", identify.compression()
 print
 
 print "ListIdentifiers"
-headers = server.listIdentifiers(from_="2003-04-10", metadataPrefix='oai_dc')
+headers = client.listIdentifiers(from_="2003-04-10", metadataPrefix='oai_dc')
 for header in headers:
     print "identifier:", header.identifier()
     print "datestamp:", header.datestamp()
@@ -36,14 +36,14 @@ for header in headers:
 print
 
 print "ListMetadataFormats"
-for prefix, schema, ns in server.listMetadataFormats():
+for prefix, schema, ns in client.listMetadataFormats():
     print "metadataPrefix:", prefix
     print "schema:", schema
     print "metadataNamespace:", ns
 print
 
 print "ListRecords"
-for header, metadata, about in server.listRecords(
+for header, metadata, about in client.listRecords(
     from_="2003-04-10", metadataPrefix='oai_dc'):
     print "header"
     print "identifier:", header.identifier()
@@ -58,10 +58,10 @@ for header, metadata, about in server.listRecords(
 print
 
 print "ListSets"
-for setSpec, setName, setDescription in server.listSets():
+for setSpec, setName, setDescription in client.listSets():
     print "setSpec:", setSpec
     print "setName:", setName
     print "setDescription:", setDescription
 print
 
-server.save()
+client.save()

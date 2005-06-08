@@ -143,41 +143,6 @@ def buildSets(server, namespaces, xml):
         sets.append((setSpec, setName, None))
     return sets, token
 
-def GetRecord(server, args, xml):
-    records, token = buildRecords(
-        server,
-        args['metadataPrefix'],
-        server.getNamespaces(),
-        server.getMetadataSchemaRegistry(),
-        xml
-        )
-    assert token is None
-    return records[0]
-    
-def Identify(server, args, xml):
-    tree = server.parse(xml)
-    namespaces = server.getNamespaces()
-    evaluator = etree.XPathEvaluator(tree, namespaces)
-    identify_node = evaluator.evaluate(
-        '/oai:OAI-PMH/oai:Identify')[0]
-    identify_evaluator = etree.XPathEvaluator(identify_node, namespaces)
-    e = identify_evaluator.evaluate
-    
-    repositoryName = e('string(oai:repositoryName/text())')
-    baseURL = e('string(oai:baseURL/text())')
-    protocolVersion = e('string(oai:protocolVersion/text())')
-    adminEmails = e('oai:adminEmail/text()')
-    earliestDatestamp = common.datestamp_to_datetime(
-        e('string(oai:earliestDatestamp/text())'))
-    deletedRecord = e('string(oai:deletedRecord/text())')
-    granularity = e('string(oai:granularity/text())')
-    compression = e('oai:compression/text()')
-    # XXX description
-    identify = common.ServerIdentify(repositoryName, baseURL, protocolVersion,
-                                     adminEmails, earliestDatestamp,
-                                     deletedRecord, granularity, compression)
-    return identify
-
 def ResumptionListGenerator(firstBatch, nextBatch):
     result, token = firstBatch()
     while 1:
@@ -187,93 +152,16 @@ def ResumptionListGenerator(firstBatch, nextBatch):
             break
         result, token = nextBatch(token)
 
-def ListIdentifiers(server, args, xml):
-    namespaces = server.getNamespaces()
-    def firstBatch():
-        return buildIdentifiers(server, namespaces, xml)
-    def nextBatch(token):
-        xml = server.makeRequest(verb='ListIdentifiers',
-                                 resumptionToken=token)
-        return buildIdentifiers(server, namespaces, xml)
-    return ResumptionListGenerator(firstBatch, nextBatch)
+class BaseClient(common.ValidatingOAIPMH):
 
-def ListMetadataFormats(server, args, xml):
-    #XXX args always thrown away?
-    tree = server.parse(xml)
-    namespaces = server.getNamespaces()
-    evaluator = etree.XPathEvaluator(tree, namespaces)
-
-    metadataFormat_nodes = evaluator.evaluate(
-        '/oai:OAI-PMH/oai:ListMetadataFormats/oai:metadataFormat')
-    metadataFormats = []
-    for metadataFormat_node in metadataFormat_nodes:
-        e = etree.XPathEvaluator(metadataFormat_node, namespaces).evaluate
-        metadataPrefix = e('string(oai:metadataPrefix/text())')
-        schema = e('string(oai:schema/text())')
-        metadataNamespace = e('string(oai:metadataNamespace/text())')
-        metadataFormat = (metadataPrefix, schema, metadataNamespace)
-        metadataFormats.append(metadataFormat)
-
-    return metadataFormats
-
-def ListRecords(server, args, xml):
-    namespaces = server.getNamespaces()
-    metadata_prefix = args['metadataPrefix']
-    metadata_schema_registry = server.getMetadataSchemaRegistry()
-    def firstBatch():
-        return buildRecords(
-            server, metadata_prefix, namespaces,
-            metadata_schema_registry, xml)
-    def nextBatch(token):
-        xml = server.makeRequest(
-            verb='ListRecords',
-            resumptionToken=token)
-        return buildRecords(
-            server,
-            metadata_prefix, namespaces,
-            metadata_schema_registry, xml)
-    return ResumptionListGenerator(firstBatch, nextBatch)
-
-def ListSets(server, args, xml):
-    namespaces = server.getNamespaces()
-    def firstBatch():
-        return buildSets(server, namespaces, xml)
-    def nextBatch(token):
-        xml = server.makeRequest(
-            verb='ListSets',
-            resumptionToken=token)
-        return buildSets(server, namespaces, xml)
-    return ResumptionListGenerator(firstBatch, nextBatch)
-
-class OAIMethodImpl:
-    def __init__(self, verb, argspec, factory):
-        self._factory = factory
-        self._verb = verb
-        self._validator = common.ArgumentValidator(argspec)
-        
-    def __call__(self, bound_self, **kw):
-        # deal with 'from' (python keyword)
-        if kw.has_key('from_'):
-            kw['from'] = kw['from_']
-            del kw['from_']
-        local = self._validator.validate(kw)
-        kw['verb'] = self._verb
-        # reconstruct all arguments XXX hack
-        args = kw.copy()
-        args.update(local)
-        return self._factory(bound_self, args, bound_self.makeRequest(**kw))
-
-def OAIMethod(verb, argspec, factory):
-    obj = OAIMethodImpl(verb, argspec, factory)
-    def method(self, **kw):
-        return obj(self, **kw)
-    return method
-
-class BaseServerProxy:
     def __init__(self, metadataSchemaRegistry=None):
         self._metadata_schema_registry = (
             metadataSchemaRegistry or globalMetadataSchemaRegistry)
         self._ignore_bad_character_hack = 0
+
+    def handleVerb(self, verb, args, kw):
+        method_name = verb + '_impl'
+        return getattr(self, method_name)(args, self.makeRequest(**kw))    
 
     def addMetadataSchema(self, schema):
         """Add metadata schema to registry.
@@ -318,57 +206,104 @@ class BaseServerProxy:
             xml = unicode(xml, 'UTF-8')
         return etree.XML(xml)
 
-    getRecord = OAIMethod(
-        'GetRecord',
-        {'identifier':'required',
-        'metadataPrefix':'required'},
-        GetRecord
-        )
+    def GetRecord_impl(self, args, xml):
+        records, token = buildRecords(
+            self,
+            args['metadataPrefix'],
+            self.getNamespaces(),
+            self.getMetadataSchemaRegistry(),
+            xml
+            )
+        assert token is None
+        return records[0]
+
+    # implementation of the various methods, delated to from
+    # handleVerb method
     
-    identify = OAIMethod(
-        'Identify',
-        {},
-        Identify
-        )
+    def Identify_impl(self, args, xml):
+        tree = self.parse(xml)
+        namespaces = self.getNamespaces()
+        evaluator = etree.XPathEvaluator(tree, namespaces)
+        identify_node = evaluator.evaluate(
+            '/oai:OAI-PMH/oai:Identify')[0]
+        identify_evaluator = etree.XPathEvaluator(identify_node, namespaces)
+        e = identify_evaluator.evaluate
 
-    listIdentifiers = OAIMethod(
-        'ListIdentifiers',
-        {'from':'optional',
-         'until':'optional',
-         'metadataPrefix':'required',
-         'set':'optional',
-         'resumptionToken':'exclusive',
-         },
-        ListIdentifiers
-        )
+        repositoryName = e('string(oai:repositoryName/text())')
+        baseURL = e('string(oai:baseURL/text())')
+        protocolVersion = e('string(oai:protocolVersion/text())')
+        adminEmails = e('oai:adminEmail/text()')
+        earliestDatestamp = common.datestamp_to_datetime(
+            e('string(oai:earliestDatestamp/text())'))
+        deletedRecord = e('string(oai:deletedRecord/text())')
+        granularity = e('string(oai:granularity/text())')
+        compression = e('oai:compression/text()')
+        # XXX description
+        identify = common.ServerIdentify(repositoryName, baseURL, protocolVersion,
+                                         adminEmails, earliestDatestamp,
+                                         deletedRecord, granularity, compression)
+        return identify
 
-    listMetadataFormats = OAIMethod(
-        'ListMetadataFormats',
-        {'identifier':'optional'},
-        ListMetadataFormats
-        )
+    def ListIdentifiers_impl(self, args, xml):
+        namespaces = self.getNamespaces()
+        def firstBatch():
+            return buildIdentifiers(self, namespaces, xml)
+        def nextBatch(token):
+            xml = self.makeRequest(verb='ListIdentifiers',
+                                   resumptionToken=token)
+            return buildIdentifiers(self, namespaces, xml)
+        return ResumptionListGenerator(firstBatch, nextBatch)
 
-    listRecords = OAIMethod(
-        'ListRecords',
-        {'from':'optional',
-         'until':'optional',
-         'set':'optional',
-         'resumptionToken':'exclusive',
-         'metadataPrefix':'required',
-         },
-        ListRecords
-        )
+    def ListMetadataFormats_impl(self, args, xml):
+        tree = self.parse(xml)
+        namespaces = self.getNamespaces()
+        evaluator = etree.XPathEvaluator(tree, namespaces)
 
-    listSets = OAIMethod(
-        'ListSets',
-        {'resumptionToken':'exclusive',
-         },
-        ListSets
-        )
-    
-class ServerProxy(BaseServerProxy):
+        metadataFormat_nodes = evaluator.evaluate(
+            '/oai:OAI-PMH/oai:ListMetadataFormats/oai:metadataFormat')
+        metadataFormats = []
+        for metadataFormat_node in metadataFormat_nodes:
+            e = etree.XPathEvaluator(metadataFormat_node, namespaces).evaluate
+            metadataPrefix = e('string(oai:metadataPrefix/text())')
+            schema = e('string(oai:schema/text())')
+            metadataNamespace = e('string(oai:metadataNamespace/text())')
+            metadataFormat = (metadataPrefix, schema, metadataNamespace)
+            metadataFormats.append(metadataFormat)
+
+        return metadataFormats
+
+    def ListRecords_impl(self, args, xml):
+        namespaces = self.getNamespaces()
+        metadata_prefix = args['metadataPrefix']
+        metadata_schema_registry = self.getMetadataSchemaRegistry()
+        def firstBatch():
+            return buildRecords(
+                self, metadata_prefix, namespaces,
+                metadata_schema_registry, xml)
+        def nextBatch(token):
+            xml = self.makeRequest(
+                verb='ListRecords',
+                resumptionToken=token)
+            return buildRecords(
+                self,
+                metadata_prefix, namespaces,
+                metadata_schema_registry, xml)
+        return ResumptionListGenerator(firstBatch, nextBatch)
+
+    def ListSets_impl(self, args, xml):
+        namespaces = self.getNamespaces()
+        def firstBatch():
+            return buildSets(self, namespaces, xml)
+        def nextBatch(token):
+            xml = self.makeRequest(
+                verb='ListSets',
+                resumptionToken=token)
+            return buildSets(self, namespaces, xml)
+        return ResumptionListGenerator(firstBatch, nextBatch)
+
+class Client(BaseClient):
     def __init__(self, base_url, metadataSchemaRegistry=None):
-        BaseServerProxy.__init__(self, metadataSchemaRegistry)
+        BaseClient.__init__(self, metadataSchemaRegistry)
         self._base_url = base_url
         
     def makeRequest(self, **kw):

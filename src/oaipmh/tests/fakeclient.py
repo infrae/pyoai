@@ -3,9 +3,9 @@ import os.path
 from urllib import urlencode
 from string import zfill
 
-class FakeServerProxy(client.BaseServerProxy):
+class FakeClient(client.BaseClient):
     def __init__(self, mapping_path):
-        client.BaseServerProxy.__init__(self)
+        client.BaseClient.__init__(self)
         self._mapping = createMapping(mapping_path)
         
     def makeRequest(self, **kw):
@@ -37,14 +37,14 @@ def createMapping(mapping_path):
         result[request] = text
     return result
 
-class FakeCreaterServerProxy(client.ServerProxy):
+class FakeCreaterClient(client.Client):
     def __init__(self, base_url, mapping_path):
-        client.ServerProxy.__init__(self, base_url)
+        client.Client.__init__(self, base_url)
         self._mapping = {}
         self._mapping_path = mapping_path
         
     def makeRequest(self, **kw):
-        text = client.ServerProxy.makeRequest(self, **kw)
+        text = client.Client.makeRequest(self, **kw)
         self._mapping[getRequestKey(kw)] = text
         return text
 

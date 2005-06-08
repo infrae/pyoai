@@ -210,11 +210,12 @@ class XMLTreeServer:
     def _outputMetadata(self, tree, metadata):
         e_metadata = SubElement(tree, nsoai('metadata'))
         e_dc = SubElement(e_metadata, nsdc('dc'))
-        e_dc.set('{%s}schemaLocation' % NS_XSI,
-                 ('http://www.openarchives.org/OAI/2.0/oai_dc/'
-                  'http://www.openarchives.org/OAI/2.0/oai_dc.xsd'))
+        #e_dc.set('{%s}schemaLocation' % NS_XSI,
+        #         ('http://www.openarchives.org/OAI/2.0/oai_dc/'
+        #          'http://www.openarchives.org/OAI/2.0/oai_dc.xsd'))
  
-class XMLServer:
+        
+class XMLServer(object):
     """A server that responds to messages by returning OAI-PMH compliant XML.
 
     Takes a server object.
@@ -222,8 +223,8 @@ class XMLServer:
     def __init__(self, server):
         self._tree_server = XMLTreeServer(server)
         
-    def getRecord(self, identifier, metadataPrefix):
-        pass
+    def getRecord(self, **kw):
+        return etree.tostring(self._tree_server.getRecord(**kw).getroot())
     
     def identify(self, **kw):
         return etree.tostring(self._tree_server.identify(**kw).getroot())

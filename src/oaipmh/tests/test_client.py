@@ -1,19 +1,20 @@
 from unittest import TestCase, TestSuite, main, makeSuite
-from fakeserver import FakeServerProxy
+from fakeclient import FakeClient
 import os
 from oaipmh.client import register_oai_dc
 from datetime import datetime
+from oaipmh import common
 
 directory = os.path.dirname(__file__)
 fake1 = os.path.join(directory, 'fake1')
-fakeserver = FakeServerProxy(fake1)
+fakeclient = FakeClient(fake1)
 
-register_oai_dc(fakeserver)
+register_oai_dc(fakeclient)
 
-class RequestTestCase(TestCase):
+class ClientTestCase(TestCase):
     
     def test_getRecord(self):
-        header, metadata, about = fakeserver.getRecord(
+        header, metadata, about = fakeclient.getRecord(
             metadataPrefix='oai_dc', identifier='hdl:1765/315')
         self.assertEquals(
             'hdl:1765/315',
@@ -24,7 +25,7 @@ class RequestTestCase(TestCase):
         self.assert_(not header.isDeleted())
         
     def test_identify(self):
-        identify = fakeserver.identify()
+        identify = fakeclient.identify()
         self.assertEquals(
             'Erasmus University : Research Online',
             identify.repositoryName())
@@ -48,7 +49,7 @@ class RequestTestCase(TestCase):
             identify.compression())
 
     def test_listIdentifiers(self):
-        headers = fakeserver.listIdentifiers(from_="2003-04-10",
+        headers = fakeclient.listIdentifiers(from_="2003-04-10",
                                              metadataPrefix='oai_dc')
         # lazy, just test first one
         headers = list(headers)
@@ -65,9 +66,15 @@ class RequestTestCase(TestCase):
             header.setSpec())
         self.assert_(not header.isDeleted())
         self.assertEquals(16, len(headers))
+
+    def test_listIdentifiers_argument_error(self):
+        self.assertRaises(
+            common.ArgumentValidationError,
+            fakeclient.listIdentifiers,
+            foo='bar')
         
     def test_listRecords(self):
-        records = fakeserver.listRecords(from_="2003-04-10",
+        records = fakeclient.listRecords(from_="2003-04-10",
                                          metadataPrefix='oai_dc')
         records = list(records)
         # lazy, just test first one
@@ -88,7 +95,7 @@ class RequestTestCase(TestCase):
             metadata.getField('title'))
             
     def test_listMetadataFormats(self):
-        formats = fakeserver.listMetadataFormats()
+        formats = fakeclient.listMetadataFormats()
         metadataPrefix, schema, metadataNamespace = formats[0]
         self.assertEquals(
             'oai_dc',
@@ -106,7 +113,7 @@ class RequestTestCase(TestCase):
             ('3:5', 'EUR Medical Dissertations', None),
             ]
         # lazy, just compare first two sets..
-        sets = fakeserver.listSets()
+        sets = fakeclient.listSets()
         sets = list(sets)
         compare = [sets[0], sets[1]]
         self.assertEquals(
@@ -114,7 +121,7 @@ class RequestTestCase(TestCase):
             compare)
 
 def test_suite():
-    return TestSuite((makeSuite(RequestTestCase), ))
+    return TestSuite((makeSuite(ClientTestCase), ))
 
 if __name__=='__main__':
     main(defaultTest='test_suite')
