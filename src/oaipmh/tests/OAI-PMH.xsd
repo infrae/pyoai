@@ -16,7 +16,7 @@
     to UTC Z notation. Simeon Warner, 2004-09-14.
     Corrected pattern matches for setSpecType and metedataPrefixType
     to agree with protocol specification. Simeon Warner, 2004-10-12.
-    $Date: 2005/06/07 10:19:05 $
+    $Date: 2005/06/08 09:57:56 $
     </documentation>
   </annotation>
 
@@ -193,7 +193,7 @@
        explicitly qualified in the response.</documentation>
     </annotation>
     <sequence>
-      <any namespace="##other" processContents="strict"/>
+      <any namespace="##other" processContents="skip"/>
     </sequence>
   </complexType>
 
@@ -203,7 +203,7 @@
       that is compliant with an XML Schema defined by a community.</documentation>
     </annotation>
     <sequence>
-      <any namespace="##other" processContents="strict"/>
+      <any namespace="##other" processContents="skip" />
     </sequence>
   </complexType>
 
@@ -230,7 +230,7 @@
       community.</documentation>
     </annotation>
     <sequence>
-      <any namespace="##other" processContents="strict"/>
+      <any namespace="##other" processContents="skip" />
     </sequence>
   </complexType>
 

@@ -33,8 +33,8 @@ class SimpleServer(server.Server):
     def _getEarliestDatestamp(self):
         return datetime(1953, 1, 1, 0, 0)
 
-class ServerTestCase(unittest.TestCase):
-        
+class XMLServerTestCase(unittest.TestCase):
+    
     def test_identify(self):
         simple_server = SimpleServer(
             'TestRepository', 'http://www.infrae.com/oai',
@@ -44,23 +44,37 @@ class ServerTestCase(unittest.TestCase):
         tree = xml_server.identify_tree()
         self.assert_(oaischema.validate(tree))
         #etree.dump(tree.getroot())
-        
-    def test_identify2(self):
+
+    def getServer(self):
         directory = os.path.dirname(__file__)
         fake1 = os.path.join(directory, 'fake1')
         myserver = fakeserver.FakeServerProxy(fake1)
-
-        xml_server = server.XMLServer(myserver)
-        tree = xml_server.identify_tree()
-        self.assert_(oaischema.validate(tree))
-        #etree.dump(tree.getroot())
+        return server.XMLServer(myserver)
         
-    def test_two(self):
-        pass
-    
+    def test_identify2(self):
+        tree = self.getServer().identify_tree()
+        self.assert_(oaischema.validate(tree))
+        
+    def test_listIdentifiers(self):
+        tree = self.getServer().listIdentifiers_tree(
+            from_="2003-04-10",
+            metadataPrefix='oai_dc')
+        self.assert_(oaischema.validate(tree))
+        
+    def test_metadataFormats(self):
+        tree = self.getServer().listMetadataFormats_tree()
+        self.assert_(oaischema.validate(tree))
+
+    def test_listRecords(self):
+        tree = self.getServer().listRecords_tree(
+            from_="2003-04-10",
+            metadataPrefix='oai_dc')
+        #etree.dump(tree.getroot())
+        self.assert_(oaischema.validate(tree))
+        
 
 def test_suite():
-    return unittest.TestSuite((unittest.makeSuite(ServerTestCase), ))
+    return unittest.TestSuite((unittest.makeSuite(XMLServerTestCase), ))
 
 if __name__=='__main__':
     main(defaultTest='test_suite')
