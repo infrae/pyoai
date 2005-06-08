@@ -183,9 +183,10 @@ class BaseClient(common.ValidatingOAIPMH):
         granularity = e('string(oai:granularity/text())')
         compression = e('oai:compression/text()')
         # XXX description
-        identify = common.ServerIdentify(repositoryName, baseURL, protocolVersion,
-                                         adminEmails, earliestDatestamp,
-                                         deletedRecord, granularity, compression)
+        identify = common.ServerIdentify(
+            repositoryName, baseURL, protocolVersion,
+            adminEmails, earliestDatestamp,
+            deletedRecord, granularity, compression)
         return identify
 
     def ListIdentifiers_impl(self, args, xml):

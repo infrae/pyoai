@@ -1,4 +1,5 @@
 from lxml import etree
+from lxml.etree import SubElement
 from oaipmh import common
 
 class MetadataRegistry:
@@ -14,35 +15,42 @@ class MetadataRegistry:
         self._readers = {}
         self._writers = {}
         
-    def registerReader(self, reader):
-        self._readers[reader.metadataPrefix()] = reader
+    def registerReader(self, metadata_prefix, reader):
+        self._readers[metadata_prefix] = reader
 
-    def registerWriter(self, writer):
-        self._writers[writer.metadataPrefix()] = writer
+    def registerWriter(self, metadata_prefix, writer):
+        self._writers[metadata_prefix] = writer
 
-    def readMetadata(self, metadata_prefix, tree):
-        return self._readers[metadata_prefix](tree)
+    def readMetadata(self, metadata_prefix, element):
+        """Turn XML into metadata object.
 
-    def writeMetadata(self, metadata_prefix, metadata):
-        return self._writers[metadata_prefix](metadata)
+        element - element to read in
+
+        returns - metadata object
+        """
+        return self._readers[metadata_prefix](element)
+
+    def writeMetadata(self, metadata_prefix, element, metadata):
+        """Write metadata as XML.
+        
+        element - ElementTree element to write under
+        metadata - metadata object to write
+        """
+        self._writers[metadata_prefix](element, metadata)
 
 global_metadata_registry = MetadataRegistry()
 
 class MetadataReader:
     """A default implementation of a reader based on fields.
     """
-    def __init__(self, metadata_prefix, fields, namespaces=None):
-        self._metadata_prefix = metadata_prefix
+    def __init__(self, fields, namespaces=None):
         self._fields = fields
         self._namespaces = namespaces or {}
 
-    def metadataPrefix(self):
-        return self._metadata_prefix
-    
-    def __call__(self, tree):
+    def __call__(self, element):
         map = {}
-        # create XPathEvaluator for this tree
-        xpath_evaluator = etree.XPathEvaluator(tree, self._namespaces)        
+        # create XPathEvaluator for this element
+        xpath_evaluator = etree.XPathEvaluator(element, self._namespaces)
         
         e = xpath_evaluator.evaluate
         # now extra field info according to xpath expr
@@ -61,7 +69,6 @@ class MetadataReader:
         return common.Metadata(map)
 
 oai_dc_reader = MetadataReader(
-    'oai_dc',
     fields={
     'title':       ('textList', 'oai_dc:dc/dc:title/text()'),
     'creator':     ('textList', 'oai_dc:dc/dc:creator/text()'),
@@ -83,3 +90,6 @@ oai_dc_reader = MetadataReader(
     'oai_dc': 'http://www.openarchives.org/OAI/2.0/oai_dc/',
     'dc' : 'http://purl.org/dc/elements/1.1/'}
     )
+
+
+    

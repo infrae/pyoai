@@ -1,16 +1,19 @@
-from oaipmh import common
 from lxml.etree import ElementTree, Element, SubElement
 from lxml import etree
 from datetime import datetime
 
+from oaipmh import common, metadata
+
 NS_OAIPMH = 'http://www.openarchives.org/OAI/2.0/'
 NS_XSI = 'http://www.w3.org/2001/XMLSchema-instance'
-NS_DC = 'http://www.openarchives.org/OAI/2.0/oai_dc/'
+NS_OAIDC = 'http://www.openarchives.org/OAI/2.0/oai_dc/'
+NS_DC = "http://purl.org/dc/elements/1.1/"
 
 ns_resolver = etree.NsResolver(
     {None: NS_OAIPMH,
      'xsi': NS_XSI,
-     'oai_dc': NS_DC})
+     'oai_dc': NS_OAIDC,
+     'dc': NS_DC})
 
 class Server:
     """Base class for a server.
@@ -67,9 +70,11 @@ class XMLTreeServer:
 
     Takes an object conforming to the server API.
     """
-    def __init__(self, server):
+    def __init__(self, server, metadata_registry):
         self._server = server
-
+        self._metadata_registry = (
+            metadata_registry or metadata.global_metadata_registry)
+        
     def getRecord(self, identifier, metadataPrefix):
         pass
 
@@ -172,7 +177,7 @@ class XMLTreeServer:
         for header, metadata, about in self._server.listRecords(**kw):
             e_record = SubElement(e_listRecords, nsoai('record'))
             self._outputHeader(e_record, header)   
-            self._outputMetadata(e_record, metadata)
+            self._outputMetadata(e_record, metadataPrefix, metadata)
             # XXX about
         return envelope
 
@@ -197,8 +202,8 @@ class XMLTreeServer:
         e_request.text = self._server.identify().baseURL()
         return e_tree
 
-    def _outputHeader(self, tree, header):
-        e_header = SubElement(tree, nsoai('header'))
+    def _outputHeader(self, element, header):
+        e_header = SubElement(element, nsoai('header'))
         e_identifier = SubElement(e_header, nsoai('identifier'))
         e_identifier.text = header.identifier()
         e_datestamp = SubElement(e_header, nsoai('datestamp'))
@@ -207,30 +212,42 @@ class XMLTreeServer:
             e = SubElement(e_header, nsoai('setSpec'))
             e.text = set
         
-    def _outputMetadata(self, tree, metadata):
-        e_metadata = SubElement(tree, nsoai('metadata'))
-        e_dc = SubElement(e_metadata, nsdc('dc'))
-        #e_dc.set('{%s}schemaLocation' % NS_XSI,
-        #         ('http://www.openarchives.org/OAI/2.0/oai_dc/'
-        #          'http://www.openarchives.org/OAI/2.0/oai_dc.xsd'))
- 
+    def _outputMetadata(self, element, metadata_prefix, metadata):
+        e_metadata = SubElement(element, nsoai('metadata'))
+        self._metadata_registry.writeMetadata(
+            metadata_prefix, e_metadata, metadata)
         
 class XMLServer(common.ValidatingOAIPMH):
     """A server that responds to messages by returning OAI-PMH compliant XML.
 
     Takes a server object.
     """
-    def __init__(self, server):
-        self._tree_server = XMLTreeServer(server)
+    def __init__(self, server, metadata_registry=None):
+        self._tree_server = XMLTreeServer(server, metadata_registry)
 
     def handleVerb(self, verb, args, kw):
         method_name = verb[0].lower() + verb[1:]
         return etree.tostring(
             getattr(self._tree_server, method_name)(**kw).getroot())
 
+def oai_dc_writer(element, metadata):
+    e_dc = SubElement(element, nsoaidc('dc'))
+    e_dc.set('{%s}schemaLocation' % NS_XSI,
+             '%s http://www.openarchives.org/OAI/2.0/oai_dc.xsd' % NS_DC)
+    map = metadata.getMap()
+    for name in [
+        'title', 'creator', 'subject', 'description', 'publisher',
+        'contributor', 'date', 'type', 'format', 'identifier',
+        'source', 'language', 'relation', 'coverage', 'rights']:
+        for value in map.get(name, []):
+            e = SubElement(e_dc, nsdc(name))
+            e.text = value
+               
 def nsoai(name):
     return '{%s}%s' % (NS_OAIPMH, name)
 
+def nsoaidc(name):
+    return '{%s}%s' % (NS_OAIDC, name)
+
 def nsdc(name):
     return '{%s}%s' % (NS_DC, name)
-

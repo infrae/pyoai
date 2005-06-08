@@ -8,7 +8,8 @@ directory = os.path.dirname(__file__)
 fake1 = os.path.join(directory, 'fake1')
 fakeclient = FakeClient(fake1)
 
-fakeclient.getMetadataRegistry().registerReader(metadata.oai_dc_reader)
+fakeclient.getMetadataRegistry().registerReader(
+    'oai_dc', metadata.oai_dc_reader)
 
 class ClientTestCase(TestCase):
     

@@ -7,7 +7,8 @@ directory = os.path.dirname(__file__)
 fake2 = os.path.join(directory, 'fake2')
 fakeclient = FakeClient(fake2)
 
-fakeclient.getMetadataRegistry().registerReader(metadata.oai_dc_reader)
+fakeclient.getMetadataRegistry().registerReader(
+    'oai_dc', metadata.oai_dc_reader)
 
 class DeletedRecordsTestCase(TestCase):
     def test_getRecord_deleted(self):
