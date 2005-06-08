@@ -58,22 +58,22 @@ class Server:
     
     def _getEarliestDatestamp(self):
         raise NotImplementedError
-     
-class XMLServer:
-    """A server that responds to messages by returning OAI-PMH compliant XML.
 
-    Takes a server object.
+class XMLTreeServer:
+    """A server that responds to messages by returning XML trees.
+
+    This is an implementation class that normally would not be exposed
+    to the outside world.
+
+    Takes an object conforming to the server API.
     """
     def __init__(self, server):
         self._server = server
-        
+
     def getRecord(self, identifier, metadataPrefix):
         pass
-    
-    def identify(self):
-        return etree.tostring(self.identify_tree().getroot())
 
-    def identify_tree(self):
+    def identify(self):
         envelope = self._outputEnvelope(verb='Identify')
         identify = self._server.identify()
         e_identify = SubElement(envelope.getroot(), nsoai('Identify'))
@@ -103,13 +103,6 @@ class XMLServer:
         return envelope
     
     def listIdentifiers(self, metadataPrefix, from_=None, until=None, set=None,
-                        resumptionToken=None):
-        return etree.tostring(
-            self.listIdentifiers_tree(metadataPrefix, from_, until, set,
-                                      resumptionToken).getroot())
-
-    def listIdentifiers_tree(
-        self, metadataPrefix, from_=None, until=None, set=None,
         resumptionToken=None):
         envelope = self._outputEnvelope(verb='ListIdentifiers', from_=from_,
                                         metadataPrefix=metadataPrefix,
@@ -131,12 +124,8 @@ class XMLServer:
         for header in self._server.listIdentifiers(**kw):
             self._outputHeader(e_listIdentifiers, header)
         return envelope
-    
+
     def listMetadataFormats(self, identifier=None):
-        return etree.tostring(
-            self.listMetadataFormats_tree(identifier).getroot())
-    
-    def listMetadataFormats_tree(self, identifier=None):
         envelope = self._outputEnvelope(verb="ListMetadataFormats",
                                         identifier=identifier)
         e_listMetadataFormats = SubElement(envelope.getroot(),
@@ -159,15 +148,9 @@ class XMLServer:
                                              nsoai('metadataNamespace'))
             e_metadataNamespace.text = metadataNamespace
         return envelope            
-            
+
     def listRecords(self, metadataPrefix, from_=None, until=None, set=None,
                     resumptionToken=None):
-        return etree.tostring(
-            self.listRecords_tree(metadataPrefix, from_, until, set,
-                                  resumptionToken))
-
-    def listRecords_tree(self, metadataPrefix, from_=None, until=None, set=None,
-                         resumptionToken=None):
         envelope = self._outputEnvelope(verb="ListRecords",
                                         metadataPrefix=metadataPrefix,
                                         from_=from_,
@@ -192,9 +175,6 @@ class XMLServer:
             self._outputMetadata(e_record, metadata)
             # XXX about
         return envelope
-
-    def listSets(self, resumptionToken=None):
-        pass
 
     def _outputEnvelope(self, **kw):
         e_oaipmh = Element(nsoai('OAI-PMH'), ns_resolver=ns_resolver)
@@ -233,63 +213,40 @@ class XMLServer:
         e_dc.set('{%s}schemaLocation' % NS_XSI,
                  ('http://www.openarchives.org/OAI/2.0/oai_dc/'
                   'http://www.openarchives.org/OAI/2.0/oai_dc.xsd'))
+ 
+class XMLServer:
+    """A server that responds to messages by returning OAI-PMH compliant XML.
+
+    Takes a server object.
+    """
+    def __init__(self, server):
+        self._tree_server = XMLTreeServer(server)
         
-        #SubElement(e_metadata, '{http://ns.infrae.com/heh}test')
-      #  xmlns:oai_dc="http://www.openarchives.org/OAI/2.0/oai_dc/" 
-#         xmlns:dc="http://purl.org/dc/elements/1.1/" 
-#         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" 
-#         xsi:schemaLocation="http://www.openarchives.org/OAI/2.0/oai_dc/ 
-#         http://www.openarchives.org/OAI/2.0/oai_dc.xsd">
+    def getRecord(self, identifier, metadataPrefix):
+        pass
+    
+    def identify(self, **kw):
+        return etree.tostring(self._tree_server.identify(**kw).getroot())
+
+    def listIdentifiers(self, **kw):
+        return etree.tostring(
+            self._tree_server.listIdentifiers(**kw).getroot())
+        
+    def listMetadataFormats(self, **kw):
+        return etree.tostring(
+            self._tree_server.listMetadataFormats(**kw).getroot())
+            
+    def listRecords(self, **kw):
+        return etree.tostring(
+            self._tree_server.listRecords(**kw).getroot())
+
+    def listSets(self, resumptionToken=None):
+        return etree.tostring(
+            self._tree_server.listSets(**kw).getroot())
 
 def nsoai(name):
     return '{%s}%s' % (NS_OAIPMH, name)
 
 def nsdc(name):
     return '{%s}%s' % (NS_DC, name)
-
-def outputHeader(tree, header):
-    """Given a header build XML representation.
-    """
-    e_header = Element('{%s}header' % NS_OAIPMH, ns_resolver=ns_resolver)
-    e_identifier = SubElement(e_header, '{%s}identifier' % NS_OAIPMH)
-    e_identifier.text = header.identifier()
-    e_datestamp = SubElement(e_header, '{%s}datestamp' % NS_OAIPMH)
-    e_datestamp.text = header.datestamp()
-    for set in header.setSpec():
-        e = SubElement(e_header, '{%s}setSpec' % NS_OAIPMH)
-        e.text = set
-    tree.append(e_header)
-
-def outputRecord(tree, record):
-    """Given a record build XML representation.
-    """
-    header, metadata, about = record
-    e_record = Element('{%s}record' % NS_OAIPMH, ns_resolver=ns_resolver)
-    e_record.append(outputHeader(header))
-    e_metadata = SubElement(e_record, '{%s}metadata' % NS_OAIPMH)
-    # XXX ignore about for now
-    tree.append(e_record)
-    
-## def outputRecords(records, batch_size=None):
-##     """Given an iterable of records, return iterable.
-
-##     batch_size is size of individual batch, or None for no batching.
-    
-##     Returns iterable of xml for each batch, including resumption
-##     token information.
-##     """
-##     c = 0
-##     for record in records:
-##         e_records = Element(
-##         if batch_size is not None and c >= batch_size:
-##             c = 0
-##             yield e_records
-##         c += 1
-##     yield e_records
-    
-    
-def outputServerIdentify(tree, identify):
-    """Given an identify builds an XML representation.
-    """
-    pass
 

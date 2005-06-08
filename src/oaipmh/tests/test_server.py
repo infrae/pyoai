@@ -29,52 +29,39 @@ class ClientServerProxy(client.BaseServerProxy):
         verb = verb[0].lower() + verb[1:]
         return getattr(self._server, verb)(**kw)
 
-class SimpleServer(server.Server):
-    def _getEarliestDatestamp(self):
-        return datetime(1953, 1, 1, 0, 0)
-
 class XMLServerTestCase(unittest.TestCase):
     
-    def test_identify(self):
-        simple_server = SimpleServer(
-            'TestRepository', 'http://www.infrae.com/oai',
-            ['faassen@infrae.com'])
+    def setUp(self):
+        self._server = self.getXMLTreeServer()
         
-        xml_server = server.XMLServer(simple_server)
-        tree = xml_server.identify_tree()
-        self.assert_(oaischema.validate(tree))
-        #etree.dump(tree.getroot())
-
-    def getServer(self):
+    def getXMLTreeServer(self):
         directory = os.path.dirname(__file__)
         fake1 = os.path.join(directory, 'fake1')
         myserver = fakeserver.FakeServerProxy(fake1)
-        return server.XMLServer(myserver)
+        return server.XMLTreeServer(myserver)
         
-    def test_identify2(self):
-        tree = self.getServer().identify_tree()
+    def test_identify(self):
+        tree = self._server.identify()
         self.assert_(oaischema.validate(tree))
         
     def test_listIdentifiers(self):
-        tree = self.getServer().listIdentifiers_tree(
+        tree = self._server.listIdentifiers(
             from_="2003-04-10",
             metadataPrefix='oai_dc')
         self.assert_(oaischema.validate(tree))
         
     def test_metadataFormats(self):
-        tree = self.getServer().listMetadataFormats_tree()
+        tree = self._server.listMetadataFormats()
         self.assert_(oaischema.validate(tree))
 
     def test_listRecords(self):
-        tree = self.getServer().listRecords_tree(
+        tree = self._server.listRecords(
             from_="2003-04-10",
             metadataPrefix='oai_dc')
-        #etree.dump(tree.getroot())
         self.assert_(oaischema.validate(tree))
-        
 
 def test_suite():
-    return unittest.TestSuite((unittest.makeSuite(XMLServerTestCase), ))
+    return unittest.TestSuite([unittest.makeSuite(XMLServerTestCase)])
 
 if __name__=='__main__':
     main(defaultTest='test_suite')
