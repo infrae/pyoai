@@ -150,7 +150,7 @@ def OAIMethod(verb, argspec):
     return method
 
 class ValidatingOAIPMH:
-    """Implements the OAI-PMH interface.
+    """Mixin that implements the OAI-PMH interface.
 
     It validates method calls and passes them on to the 'handleVerb'
     method, which should be overridden in a subclass.

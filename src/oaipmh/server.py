@@ -215,35 +215,18 @@ class XMLTreeServer:
         #          'http://www.openarchives.org/OAI/2.0/oai_dc.xsd'))
  
         
-class XMLServer(object):
+class XMLServer(common.ValidatingOAIPMH):
     """A server that responds to messages by returning OAI-PMH compliant XML.
 
     Takes a server object.
     """
     def __init__(self, server):
         self._tree_server = XMLTreeServer(server)
-        
-    def getRecord(self, **kw):
-        return etree.tostring(self._tree_server.getRecord(**kw).getroot())
-    
-    def identify(self, **kw):
-        return etree.tostring(self._tree_server.identify(**kw).getroot())
 
-    def listIdentifiers(self, **kw):
+    def handleVerb(self, verb, args, kw):
+        method_name = verb[0].lower() + verb[1:]
         return etree.tostring(
-            self._tree_server.listIdentifiers(**kw).getroot())
-        
-    def listMetadataFormats(self, **kw):
-        return etree.tostring(
-            self._tree_server.listMetadataFormats(**kw).getroot())
-            
-    def listRecords(self, **kw):
-        return etree.tostring(
-            self._tree_server.listRecords(**kw).getroot())
-
-    def listSets(self, resumptionToken=None):
-        return etree.tostring(
-            self._tree_server.listSets(**kw).getroot())
+            getattr(self._tree_server, method_name)(**kw).getroot())
 
 def nsoai(name):
     return '{%s}%s' % (NS_OAIPMH, name)
