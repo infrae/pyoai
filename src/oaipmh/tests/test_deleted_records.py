@@ -1,13 +1,13 @@
 from unittest import TestCase, TestSuite, main, makeSuite
 from fakeclient import FakeClient
 import os
-from oaipmh.client import register_oai_dc
+from oaipmh import metadata
 
 directory = os.path.dirname(__file__)
 fake2 = os.path.join(directory, 'fake2')
 fakeclient = FakeClient(fake2)
 
-register_oai_dc(fakeclient)
+fakeclient.getMetadataRegistry().registerReader(metadata.oai_dc_reader)
 
 class DeletedRecordsTestCase(TestCase):
     def test_getRecord_deleted(self):

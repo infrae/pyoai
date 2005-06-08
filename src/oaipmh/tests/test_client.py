@@ -1,15 +1,14 @@
 from unittest import TestCase, TestSuite, main, makeSuite
 from fakeclient import FakeClient
 import os
-from oaipmh.client import register_oai_dc
 from datetime import datetime
-from oaipmh import common
+from oaipmh import common, metadata
 
 directory = os.path.dirname(__file__)
 fake1 = os.path.join(directory, 'fake1')
 fakeclient = FakeClient(fake1)
 
-register_oai_dc(fakeclient)
+fakeclient.getMetadataRegistry().registerReader(metadata.oai_dc_reader)
 
 class ClientTestCase(TestCase):
     
