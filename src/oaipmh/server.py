@@ -9,11 +9,12 @@ NS_XSI = 'http://www.w3.org/2001/XMLSchema-instance'
 NS_OAIDC = 'http://www.openarchives.org/OAI/2.0/oai_dc/'
 NS_DC = "http://purl.org/dc/elements/1.1/"
 
-ns_resolver = etree.NsResolver(
-    {None: NS_OAIPMH,
-     'xsi': NS_XSI,
-     'oai_dc': NS_OAIDC,
-     'dc': NS_DC})
+nsmap = {
+    None: NS_OAIPMH,
+    'xsi': NS_XSI,
+    'oai_dc': NS_OAIDC,
+    'dc': NS_DC
+    }
 
 class Server:
     """Base class for a server.
@@ -182,7 +183,7 @@ class XMLTreeServer:
         return envelope
 
     def _outputEnvelope(self, **kw):
-        e_oaipmh = Element(nsoai('OAI-PMH'), ns_resolver=ns_resolver)
+        e_oaipmh = Element(nsoai('OAI-PMH'), nsmap=nsmap)
         e_oaipmh.set('{%s}schemaLocation' % NS_XSI,
                      ('http://www.openarchives.org/OAI/2.0/ '
                       'http://www.openarchives.org/OAI/2.0/OAI-PMH.xsd'))

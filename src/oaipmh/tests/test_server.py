@@ -45,9 +45,9 @@ class XMLServerTestCase(unittest.TestCase):
         tree = self._server.listRecords(
             from_="2003-04-10",
             metadataPrefix='oai_dc')
-        #f = open('outm.xml', 'w')
-        #tree.write(f)
-        #f.close()
+        f = open('outm.xml', 'w')
+        tree.write(f)
+        f.close()
         self.assert_(oaischema.validate(tree))
 
         
