@@ -163,10 +163,9 @@ class XMLTreeServer:
         e_request = SubElement(e_oaipmh, nsoai('request'))
         # XXX shouldn't output this if we had an error
         for key, value in kw.items():
-            if value is not None:
-                if key == 'from_':
-                    key = 'from'
-                e_request.set(key, value)
+            if key == 'from_':
+                key = 'from'
+            e_request.set(key, value)
         # XXX this is potentially slow..
         e_request.text = self._server.identify().baseURL()
         e_element = SubElement(e_oaipmh, nsoai(kw['verb']))
@@ -199,7 +198,7 @@ class XMLServer(common.ValidatingOAIPMH):
         method_name = verb[0].lower() + verb[1:]
         return etree.tostring(
             getattr(self._tree_server, method_name)(**kw).getroot())
-
+    
 def oai_dc_writer(element, metadata):
     e_dc = SubElement(element, nsoaidc('dc'))
     e_dc.set('{%s}schemaLocation' % NS_XSI,
