@@ -10,6 +10,17 @@ class FakeServer:
                          None))
         self._data = data
 
+    def identify(self):
+        return common.ServerIdentify(
+            repositoryName='Fake',
+            baseURL='http://www.infrae.com/oai/',
+            protocolVersion="2.0",
+            adminEmails=['faassen@infrae.com'],
+            earliestDatestamp=datetime(2005, 1, 1),
+            deletedRecord='transient',
+            granularity='YYYY-MM-DDThh:mm:ssZ',
+            compression='identity')
+    
     def listIdentifiers(self, metadataPrefix=None, from_=None, until=None,
                         set=None):
         

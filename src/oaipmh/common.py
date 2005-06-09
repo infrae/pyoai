@@ -297,6 +297,8 @@ class Resumption(ResumptionOAIPMH):
             end_batch = cursor + self._batch_size
             # do query again with original parameters
             result = getattr(self._server, method_name)(**kw)
+            # XXX defeat laziness of any generators..
+            result = list(result)
             if end_batch < len(result):
                 resumptionToken = self.encodeResumptionToken(
                     kw, end_batch)
@@ -307,6 +309,8 @@ class Resumption(ResumptionOAIPMH):
         result = getattr(self._server, method_name)(**kw)
         # now handle resumption system
         if verb in ['ListSets', 'ListIdentifiers', 'ListRecords']:
+            # XXX defeat the laziness effect of any generators..
+            result = list(result)
             end_batch = self._batch_size
             if end_batch < len(result):
                 resumptionToken = self.encodeResumptionToken(

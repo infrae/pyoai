@@ -16,60 +16,13 @@ nsmap = {
     'dc': NS_DC
     }
 
-class Server:
-    """Base class for a server.
-
-    Implement this interface (possibly subclassing this one) for your
-    backend.
-
-    A client ServerProxy can also stand in for a server.
-    """
-    def __init__(self, repositoryName, baseURL, adminEmails):
-        self._repositoryName = repositoryName
-        self._baseURL = baseURL
-        self._adminEmails = adminEmails
-        
-    def getRecord(self, identifier, metadataPrefix):
-        raise notImplementedError
-
-    def identify(self):
-        return common.ServerIdentify(
-            repositoryName=self._repositoryName,
-            baseURL=self._baseURL,
-            protocolVersion="2.0",
-            adminEmails=self._adminEmails,
-            earliestDatestamp=self._getEarliestDatestamp(),
-            deletedRecord='transient',
-            granularity='YYYY-MM-DDThh:mm:ssZ',
-            compression='identity')
-
-    def listIdentifiers(self, metadataPrefix, from_=None, until=None, set=None,
-                        resumptionToken=None):
-        raise NotImplementedError
-
-    def listMetadataFormats(self, identifier=None):
-        raise NotImplementedError
-
-    def listRecords(self, metadataPrefix, from_=None, until=None, set=None,
-                    resumptionToken=None):
-        raise NotImplementedError
-
-    def listSets(self, resumptionToken=None):
-        raise NotImplementedError
-
-    def baseURL(self):
-        return self._baseURL
-    
-    def _getEarliestDatestamp(self):
-        raise NotImplementedError
-
 class XMLTreeServer:
     """A server that responds to messages by returning XML trees.
 
     This is an implementation class that normally would not be exposed
     to the outside world.
 
-    Takes an object conforming to the server API.
+    Takes an object conforming to the ResumptionOAIPMH API.
     """
     def __init__(self, server, metadata_registry):
         self._server = server
@@ -113,13 +66,6 @@ class XMLTreeServer:
                 e_compression = SubElement(e_identify, nsoai('compression'))
                 e_compression.text = compression
         return envelope
-    
-    def listIdentifiers(self, **kw):
-        envelope, e_listIdentifiers = self._outputEnvelope(
-            verb='ListIdentifiers', **kw)
-        for header in self._server.listIdentifiers(**kw):
-            self._outputHeader(e_listIdentifiers, header)
-        return envelope
 
     def listMetadataFormats(self, **kw):
         envelope, e_listMetadataFormats = self._outputEnvelope(
@@ -139,16 +85,39 @@ class XMLTreeServer:
             e_metadataNamespace.text = metadataNamespace
         return envelope            
 
+    def listIdentifiers(self, **kw):
+        envelope, e_listIdentifiers = self._outputEnvelope(
+            verb='ListIdentifiers', **kw)
+        def outputFunc(element, headers):
+            for header in headers:
+                self._outputHeader(element, header)
+        self._outputResuming(
+            e_listIdentifiers,
+            self._server.listIdentifiers,
+            outputFunc,
+            kw)
+        return envelope
+    
     def listRecords(self, **kw):
         envelope, e_listRecords = self._outputEnvelope(
             verb="ListRecords", **kw)
         metadataPrefix = kw['metadataPrefix']
-        for header, metadata, about in self._server.listRecords(**kw):
-            e_record = SubElement(e_listRecords, nsoai('record'))
-            self._outputHeader(e_record, header)   
-            self._outputMetadata(e_record, metadataPrefix, metadata)
-            # XXX about
+        def outputFunc(element, records):
+            for header, metadata, about in records:
+                e_record = SubElement(e_listRecords, nsoai('record'))
+                self._outputHeader(e_record, header)   
+                self._outputMetadata(e_record, metadataPrefix, metadata)
+                # XXX about
+        self._outputResuming(
+            e_listRecords,
+            self._server.listRecords,
+            outputFunc,
+            kw)
         return envelope
+
+    def listSets(self, **kw):
+        # XXX
+        raise NotImplementedError
 
     def _outputEnvelope(self, **kw):
         e_oaipmh = Element(nsoai('OAI-PMH'), nsmap=nsmap)
@@ -170,7 +139,17 @@ class XMLTreeServer:
         e_request.text = self._server.identify().baseURL()
         e_element = SubElement(e_oaipmh, nsoai(kw['verb']))
         return e_tree, e_element
-
+    
+    def _outputResuming(self, element, input_func, output_func, kw):
+        if 'resumptionToken' in kw:
+            result, token = input_func(resumptionToken=kw['resumptionToken'])
+        else:
+            result, token = input_func(**kw)
+        output_func(element, result)
+        if token is not None:
+            e_resumptionToken = SubElement(element, nsoai('resumptionToken'))
+            e_resumptionToken.text = token
+            
     def _outputHeader(self, element, header):
         e_header = SubElement(element, nsoai('header'))
         e_identifier = SubElement(e_header, nsoai('identifier'))
