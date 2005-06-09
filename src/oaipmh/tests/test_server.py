@@ -1,5 +1,6 @@
 import unittest
 import os
+from StringIO import StringIO
 from oaipmh import server, client, common, metadata
 from lxml import etree
 from datetime import datetime
@@ -14,7 +15,7 @@ def fileInTestDir(name):
 # load up schema
 oaischema = etree.XMLSchema(etree.parse(fileInTestDir('OAI-PMH.xsd')))
 
-class XMLServerTestCase(unittest.TestCase):
+class XMLTreeServerTestCase(unittest.TestCase):
     
     def setUp(self):
         self._server = self.getXMLTreeServer()
@@ -30,7 +31,7 @@ class XMLServerTestCase(unittest.TestCase):
     def test_identify(self):
         tree = self._server.identify()
         self.assert_(oaischema.validate(tree))
-        
+
     def test_listIdentifiers(self):
         tree = self._server.listIdentifiers(
             from_="2003-04-10",
@@ -50,9 +51,35 @@ class XMLServerTestCase(unittest.TestCase):
         f.close()
         self.assert_(oaischema.validate(tree))
 
+class XMLServerTestCase(unittest.TestCase):
+    
+    def setUp(self):
+        self._server = self.getXMLServer()
+        
+    def getXMLServer(self):
+        directory = os.path.dirname(__file__)
+        fake1 = os.path.join(directory, 'fake1')
+        myserver = fakeclient.FakeClient(fake1)
+        metadata_registry = metadata.MetadataRegistry()
+        metadata_registry.registerWriter('oai_dc', server.oai_dc_writer)
+        return server.XMLServer(myserver, metadata_registry)
+
+    def test_identify(self):
+        xml = self._server.identify()
+        tree = etree.parse(StringIO(xml))
+        self.assert_(oaischema.validate(tree))
+        
+    def test_listIdentifiers(self):
+        xml = self._server.listIdentifiers(
+            from_="2003-04-10",
+            metadataPrefix='oai_dc')
+        tree = etree.parse(StringIO(xml))
+        self.assert_(oaischema.validate(tree))
         
 def test_suite():
-    return unittest.TestSuite([unittest.makeSuite(XMLServerTestCase)])
+    return unittest.TestSuite([
+        unittest.makeSuite(XMLTreeServerTestCase),
+        unittest.makeSuite(XMLServerTestCase)])
 
 if __name__=='__main__':
     main(defaultTest='test_suite')

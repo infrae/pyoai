@@ -76,13 +76,12 @@ class XMLTreeServer:
         self._metadata_registry = (
             metadata_registry or metadata.global_metadata_registry)
         
-    def getRecord(self, identifier, metadataPrefix):
+    def getRecord(self, **kw):
         pass
 
     def identify(self):
-        envelope = self._outputEnvelope(verb='Identify')
+        envelope, e_identify = self._outputEnvelope(verb='Identify')
         identify = self._server.identify()
-        e_identify = SubElement(envelope.getroot(), nsoai('Identify'))
         e_repositoryName = SubElement(e_identify, nsoai('repositoryName'))
         e_repositoryName.text = identify.repositoryName()
         e_baseURL = SubElement(e_identify, nsoai('baseURL'))
@@ -108,37 +107,16 @@ class XMLTreeServer:
                 e_compression.text = compression
         return envelope
     
-    def listIdentifiers(self, metadataPrefix, from_=None, until=None, set=None,
-        resumptionToken=None):
-        envelope = self._outputEnvelope(verb='ListIdentifiers', from_=from_,
-                                        metadataPrefix=metadataPrefix,
-                                        until=until, set=set,
-                                        resumptionToken=resumptionToken)
-
-        e_listIdentifiers = SubElement(envelope.getroot(),
-                                       nsoai('ListIdentifiers'))
-        kw = {}
-        kw['metadataPrefix'] = metadataPrefix
-        if from_ is not None:
-            kw['from_'] = from_
-        if until is not None:
-            kw['until'] = until
-        if set is not None:
-            kw['set'] = set
-        if resumptionToken is not None:
-            kw['resumptionToken'] = resumptionToken
+    def listIdentifiers(self, **kw):
+        envelope, e_listIdentifiers = self._outputEnvelope(
+            verb='ListIdentifiers', **kw)
         for header in self._server.listIdentifiers(**kw):
             self._outputHeader(e_listIdentifiers, header)
         return envelope
 
-    def listMetadataFormats(self, identifier=None):
-        envelope = self._outputEnvelope(verb="ListMetadataFormats",
-                                        identifier=identifier)
-        e_listMetadataFormats = SubElement(envelope.getroot(),
-                                           nsoai('ListMetadataFormats'))
-        kw = {}
-        if identifier is not None:
-            kw['identifier'] = identifier
+    def listMetadataFormats(self, **kw):
+        envelope, e_listMetadataFormats = self._outputEnvelope(
+            verb="ListMetadataFormats", **kw)
         for (metadataPrefix,
              schema,
              metadataNamespace) in self._server.listMetadataFormats(**kw):
@@ -155,26 +133,10 @@ class XMLTreeServer:
             e_metadataNamespace.text = metadataNamespace
         return envelope            
 
-    def listRecords(self, metadataPrefix, from_=None, until=None, set=None,
-                    resumptionToken=None):
-        envelope = self._outputEnvelope(verb="ListRecords",
-                                        metadataPrefix=metadataPrefix,
-                                        from_=from_,
-                                        until=until,
-                                        set=set,
-                                        resumptionToken=resumptionToken)
-        e_listRecords = SubElement(envelope.getroot(),
-                                   nsoai('ListRecords'))
-        kw = {}
-        kw['metadataPrefix'] = metadataPrefix
-        if from_ is not None:
-            kw['from_'] = from_
-        if until is not None:
-            kw['until'] = until
-        if set is not None:
-            kw['set'] = set
-        if resumptionToken is not None:
-            kw['resumptionToken'] = resumptionToken
+    def listRecords(self, **kw):
+        envelope, e_listRecords = self._outputEnvelope(
+            verb="ListRecords", **kw)
+        metadataPrefix = kw['metadataPrefix']
         for header, metadata, about in self._server.listRecords(**kw):
             e_record = SubElement(e_listRecords, nsoai('record'))
             self._outputHeader(e_record, header)   
@@ -201,7 +163,8 @@ class XMLTreeServer:
                 e_request.set(key, value)
         # XXX this is potentially slow..
         e_request.text = self._server.identify().baseURL()
-        return e_tree
+        e_element = SubElement(e_oaipmh, nsoai(kw['verb']))
+        return e_tree, e_element
 
     def _outputHeader(self, element, header):
         e_header = SubElement(element, nsoai('header'))

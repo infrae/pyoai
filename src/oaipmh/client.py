@@ -109,7 +109,8 @@ class BaseClient(common.ValidatingOAIPMH):
 
     def handleVerb(self, verb, args, kw):
         method_name = verb + '_impl'
-        return getattr(self, method_name)(args, self.makeRequest(**kw))    
+        return getattr(self, method_name)(
+            args, self.makeRequest(verb=verb, **kw))    
 
     def getNamespaces(self):
         """Get OAI namespaces.

@@ -136,7 +136,6 @@ class OAIMethodImpl(object):
             kw['from'] = kw['from_']
             del kw['from_']
         local = self._validator.validate(kw)
-        kw['verb'] = self._verb
         # reconstruct all arguments (including local)
         args = kw.copy()
         args.update(local)
