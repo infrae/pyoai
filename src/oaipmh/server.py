@@ -157,7 +157,7 @@ class XMLTreeServer:
                       'http://www.openarchives.org/OAI/2.0/OAI-PMH.xsd'))
         e_tree = ElementTree(element=e_oaipmh)
         e_responseDate = SubElement(e_oaipmh, nsoai('responseDate'))
-        # XXX should date be now or calculated at latest possible moment?
+        # date should be first possible moment
         e_responseDate.text = common.datetime_to_datestamp(
             datetime.utcnow().replace(microsecond=0))
         e_request = SubElement(e_oaipmh, nsoai('request'))
