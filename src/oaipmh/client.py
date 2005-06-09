@@ -16,7 +16,7 @@ WAIT_MAX = 5
 class Error(Exception):
     pass
 
-class BaseClient(common.ValidatingOAIPMH):
+class BaseClient(common.OAIPMH):
 
     def __init__(self, metadata_registry=None):
         self._metadata_registry = (

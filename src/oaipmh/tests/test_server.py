@@ -5,6 +5,7 @@ from oaipmh import server, client, common, metadata
 from lxml import etree
 from datetime import datetime
 import fakeclient
+import fakeserver
 
 NS_OAIPMH = server.NS_OAIPMH
 
@@ -85,11 +86,28 @@ class XMLServerTestCase(unittest.TestCase):
             metadataPrefix='oai_dc')
         tree = etree.parse(StringIO(xml))
         self.assert_(oaischema.validate(tree))
-        
+
+class ResumptionTestCase(unittest.TestCase):
+    def setUp(self):
+        self._fakeserver = fakeserver.FakeServer()
+        self._server = common.Resumption(self._fakeserver, 10)
+
+    def test_resumption(self):
+        headers = []
+        result, token = self._server.listIdentifiers(metadataPrefix='oai_dc')
+        headers.extend(result)
+        while token is not None:
+            result, token = self._server.listIdentifiers(resumptionToken=token)
+            headers.extend(result)
+        self.assertEquals([str(i) for i in range(100)],
+                          [header.identifier() for header in headers])
+
+            
 def test_suite():
     return unittest.TestSuite([
         unittest.makeSuite(XMLTreeServerTestCase),
-        unittest.makeSuite(XMLServerTestCase)])
+        unittest.makeSuite(XMLServerTestCase),
+        unittest.makeSuite(ResumptionTestCase)])
 
 if __name__=='__main__':
     main(defaultTest='test_suite')
