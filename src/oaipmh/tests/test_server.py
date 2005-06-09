@@ -19,7 +19,7 @@ class XMLTreeServerTestCase(unittest.TestCase):
     
     def setUp(self):
         self._server = self.getXMLTreeServer()
-        
+
     def getXMLTreeServer(self):
         directory = os.path.dirname(__file__)
         fake1 = os.path.join(directory, 'fake1')
@@ -27,6 +27,11 @@ class XMLTreeServerTestCase(unittest.TestCase):
         metadata_registry = metadata.MetadataRegistry()
         metadata_registry.registerWriter('oai_dc', server.oai_dc_writer)
         return server.XMLTreeServer(myserver, metadata_registry)
+
+    def test_getRecord(self):
+        tree = self._server.getRecord(
+            metadataPrefix='oai_dc', identifier='hdl:1765/315')
+        self.assert_(oaischema.validate(tree))
         
     def test_identify(self):
         tree = self._server.identify()
@@ -38,7 +43,7 @@ class XMLTreeServerTestCase(unittest.TestCase):
             metadataPrefix='oai_dc')
         self.assert_(oaischema.validate(tree))
         
-    def test_metadataFormats(self):
+    def test_listMetadataFormats(self):
         tree = self._server.listMetadataFormats()
         self.assert_(oaischema.validate(tree))
 

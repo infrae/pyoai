@@ -77,8 +77,15 @@ class XMLTreeServer:
             metadata_registry or metadata.global_metadata_registry)
         
     def getRecord(self, **kw):
-        pass
-
+        envelope, e_getRecord = self._outputEnvelope(
+            verb='GetRecord', **kw)
+        record = self._server.getRecord(**kw)
+        header, metadata, about = self._server.getRecord(**kw)
+        e_record = SubElement(e_getRecord, nsoai('record'))
+        self._outputHeader(e_record, header)   
+        self._outputMetadata(e_record, kw['metadataPrefix'], metadata)
+        return envelope
+    
     def identify(self):
         envelope, e_identify = self._outputEnvelope(verb='Identify')
         identify = self._server.identify()
@@ -117,8 +124,7 @@ class XMLTreeServer:
     def listMetadataFormats(self, **kw):
         envelope, e_listMetadataFormats = self._outputEnvelope(
             verb="ListMetadataFormats", **kw)
-        for (metadataPrefix,
-             schema,
+        for (metadataPrefix, schema,
              metadataNamespace) in self._server.listMetadataFormats(**kw):
             e_metadataFormat = SubElement(e_listMetadataFormats,
                                           nsoai('metadataFormat'))
