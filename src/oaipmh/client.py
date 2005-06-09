@@ -15,90 +15,6 @@ WAIT_MAX = 5
 
 class Error(Exception):
     pass
-    
-def buildHeader(header_node, namespaces):
-    e = etree.XPathEvaluator(header_node, namespaces).evaluate
-    identifier = str(e('string(oai:identifier/text())'))
-    datestamp = common.datestamp_to_datetime(
-        str(e('string(oai:datestamp/text())')))
-    setspec = [str(s) for s in e('oai:setSpec/text()')]
-    deleted = e("@status = 'deleted'") 
-    return common.Header(identifier, datestamp, setspec, deleted)
-
-def buildRecords(server, metadata_prefix, namespaces, metadata_registry, xml):
-    tree = server.parse(xml)
-    # first find resumption token if available
-    evaluator = etree.XPathEvaluator(tree, namespaces)
-    token = evaluator.evaluate(
-        'string(/oai:OAI-PMH/*/oai:resumptionToken/text())')
-    if token.strip() == '':
-        token = None
-    record_nodes = evaluator.evaluate(
-        '/oai:OAI-PMH/*/oai:record')
-    result = []
-    for record_node in record_nodes:
-        record_evaluator = etree.XPathEvaluator(record_node, namespaces)
-        e = record_evaluator.evaluate
-        # find header node
-        header_node = e('oai:header')[0]
-        # create header
-        header = buildHeader(header_node, namespaces)
-        # find metadata node
-        metadata_list = e('oai:metadata')
-        if metadata_list:
-            metadata_node = metadata_list[0]
-            # create metadata
-            metadata = metadata_registry.readMetadata(metadata_prefix,
-                                                      metadata_node)
-        else:
-            metadata = None
-        # XXX TODO: about, should be third element of tuple
-        result.append((header, metadata, None))
-    return result, token
-
-def buildIdentifiers(server, namespaces, xml):
-    tree = server.parse(xml)
-    evaluator = etree.XPathEvaluator(tree, namespaces)
-    # first find resumption token is available
-    token = evaluator.evaluate(
-        'string(/oai:OAI-PMH/oai:ListIdentifiers/oai:resumptionToken/text())')
-    if token.strip() == '':
-        token = None    
-    header_nodes = evaluator.evaluate(
-            '/oai:OAI-PMH/oai:ListIdentifiers/oai:header')            
-    result = []
-    for header_node in header_nodes:
-        header = buildHeader(header_node, namespaces)
-        result.append(header)
-    return result, token
-
-def buildSets(server, namespaces, xml):
-    tree = server.parse(xml)
-    evaluator = etree.XPathEvaluator(tree, namespaces)
-    # first find resumption token if available
-    token = evaluator.evaluate(
-        'string(/oai:OAI-PMH/oai:ListSets/oai:resumptionToken/text())')
-    if token.strip() == '':
-        token = None  
-    set_nodes = evaluator.evaluate(
-        '/oai:OAI-PMH/oai:ListSets/oai:set')
-    sets = []
-    for set_node in set_nodes:
-        e = etree.XPathEvaluator(set_node, namespaces).evaluate
-        setSpec = e('string(oai:setSpec/text())')
-        setName = e('string(oai:setName/text())')
-        # XXX setDescription nodes
-        sets.append((setSpec, setName, None))
-    return sets, token
-
-def ResumptionListGenerator(firstBatch, nextBatch):
-    result, token = firstBatch()
-    while 1:
-        for item in result:
-            yield item
-        if token is None:
-            break
-        result, token = nextBatch(token)
 
 class BaseClient(common.ValidatingOAIPMH):
 
@@ -152,8 +68,7 @@ class BaseClient(common.ValidatingOAIPMH):
         return etree.XML(xml)
 
     def GetRecord_impl(self, args, xml):
-        records, token = buildRecords(
-            self,
+        records, token = self.buildRecords(
             args['metadataPrefix'],
             self.getNamespaces(),
             self._metadata_registry,
@@ -193,11 +108,11 @@ class BaseClient(common.ValidatingOAIPMH):
     def ListIdentifiers_impl(self, args, xml):
         namespaces = self.getNamespaces()
         def firstBatch():
-            return buildIdentifiers(self, namespaces, xml)
+            return self.buildIdentifiers(namespaces, xml)
         def nextBatch(token):
             xml = self.makeRequest(verb='ListIdentifiers',
                                    resumptionToken=token)
-            return buildIdentifiers(self, namespaces, xml)
+            return self.buildIdentifiers(namespaces, xml)
         return ResumptionListGenerator(firstBatch, nextBatch)
 
     def ListMetadataFormats_impl(self, args, xml):
@@ -223,15 +138,14 @@ class BaseClient(common.ValidatingOAIPMH):
         metadata_prefix = args['metadataPrefix']
         metadata_registry = self._metadata_registry
         def firstBatch():
-            return buildRecords(
-                self, metadata_prefix, namespaces,
+            return self.buildRecords(
+                metadata_prefix, namespaces,
                 metadata_registry, xml)
         def nextBatch(token):
             xml = self.makeRequest(
                 verb='ListRecords',
                 resumptionToken=token)
-            return buildRecords(
-                self,
+            return self.buildRecords(
                 metadata_prefix, namespaces,
                 metadata_registry, xml)
         return ResumptionListGenerator(firstBatch, nextBatch)
@@ -239,13 +153,82 @@ class BaseClient(common.ValidatingOAIPMH):
     def ListSets_impl(self, args, xml):
         namespaces = self.getNamespaces()
         def firstBatch():
-            return buildSets(self, namespaces, xml)
+            return self.buildSets(namespaces, xml)
         def nextBatch(token):
             xml = self.makeRequest(
                 verb='ListSets',
                 resumptionToken=token)
-            return buildSets(self, namespaces, xml)
+            return self.buildSets(namespaces, xml)
         return ResumptionListGenerator(firstBatch, nextBatch)
+
+    # various helper methods
+    
+    def buildRecords(self,
+                     metadata_prefix, namespaces, metadata_registry, xml):
+        tree = self.parse(xml)
+        # first find resumption token if available
+        evaluator = etree.XPathEvaluator(tree, namespaces)
+        token = evaluator.evaluate(
+            'string(/oai:OAI-PMH/*/oai:resumptionToken/text())')
+        if token.strip() == '':
+            token = None
+        record_nodes = evaluator.evaluate(
+            '/oai:OAI-PMH/*/oai:record')
+        result = []
+        for record_node in record_nodes:
+            record_evaluator = etree.XPathEvaluator(record_node, namespaces)
+            e = record_evaluator.evaluate
+            # find header node
+            header_node = e('oai:header')[0]
+            # create header
+            header = buildHeader(header_node, namespaces)
+            # find metadata node
+            metadata_list = e('oai:metadata')
+            if metadata_list:
+                metadata_node = metadata_list[0]
+                # create metadata
+                metadata = metadata_registry.readMetadata(metadata_prefix,
+                                                          metadata_node)
+            else:
+                metadata = None
+            # XXX TODO: about, should be third element of tuple
+            result.append((header, metadata, None))
+        return result, token
+
+    def buildIdentifiers(self, namespaces, xml):
+        tree = self.parse(xml)
+        evaluator = etree.XPathEvaluator(tree, namespaces)
+        # first find resumption token is available
+        token = evaluator.evaluate(
+            'string(/oai:OAI-PMH/oai:ListIdentifiers/oai:resumptionToken/text())')
+        if token.strip() == '':
+            token = None    
+        header_nodes = evaluator.evaluate(
+                '/oai:OAI-PMH/oai:ListIdentifiers/oai:header')            
+        result = []
+        for header_node in header_nodes:
+            header = buildHeader(header_node, namespaces)
+            result.append(header)
+        return result, token
+
+    def buildSets(self, namespaces, xml):
+        tree = self.parse(xml)
+        evaluator = etree.XPathEvaluator(tree, namespaces)
+        # first find resumption token if available
+        token = evaluator.evaluate(
+            'string(/oai:OAI-PMH/oai:ListSets/oai:resumptionToken/text())')
+        if token.strip() == '':
+            token = None  
+        set_nodes = evaluator.evaluate(
+            '/oai:OAI-PMH/oai:ListSets/oai:set')
+        sets = []
+        for set_node in set_nodes:
+            e = etree.XPathEvaluator(set_node, namespaces).evaluate
+            setSpec = e('string(oai:setSpec/text())')
+            setName = e('string(oai:setName/text())')
+            # XXX setDescription nodes
+            sets.append((setSpec, setName, None))
+        return sets, token
 
 class Client(BaseClient):
     def __init__(self, base_url, metadata_registry=None):
@@ -260,6 +243,24 @@ class Client(BaseClient):
                    }
         request = urllib2.Request(self._base_url, urlencode(kw), headers)
         return retrieveFromUrlWaiting(request)
+
+def buildHeader(header_node, namespaces):
+    e = etree.XPathEvaluator(header_node, namespaces).evaluate
+    identifier = str(e('string(oai:identifier/text())'))
+    datestamp = common.datestamp_to_datetime(
+        str(e('string(oai:datestamp/text())')))
+    setspec = [str(s) for s in e('oai:setSpec/text()')]
+    deleted = e("@status = 'deleted'") 
+    return common.Header(identifier, datestamp, setspec, deleted)
+
+def ResumptionListGenerator(firstBatch, nextBatch):
+    result, token = firstBatch()
+    while 1:
+        for item in result:
+            yield item
+        if token is None:
+            break
+        result, token = nextBatch(token)
 
 def retrieveFromUrlWaiting(request,
                            wait_max=WAIT_MAX, wait_default=WAIT_DEFAULT):
