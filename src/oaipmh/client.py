@@ -162,7 +162,7 @@ class BaseClient(common.ValidatingOAIPMH):
         assert token is None
         return records[0]
 
-    # implementation of the various methods, delated to from
+    # implementation of the various methods, delegated here by
     # handleVerb method
     
     def Identify_impl(self, args, xml):
