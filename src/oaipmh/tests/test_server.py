@@ -52,9 +52,6 @@ class XMLTreeServerTestCase(unittest.TestCase):
         tree = self._server.listRecords(
             from_="2003-04-10",
             metadataPrefix='oai_dc')
-        f = open('outm.xml', 'w')
-        tree.write(f)
-        f.close()
         self.assert_(oaischema.validate(tree))
 
 class XMLServerTestCase(unittest.TestCase):
@@ -101,7 +98,7 @@ class ResumptionTestCase(unittest.TestCase):
             headers.extend(result)
         self.assertEquals([str(i) for i in range(100)],
                           [header.identifier() for header in headers])
-
+    
             
 def test_suite():
     return unittest.TestSuite([
