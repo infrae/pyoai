@@ -52,6 +52,11 @@ class XMLTreeServerTestCase(unittest.TestCase):
         self.assert_(oaischema.validate(tree))
 
 class XMLServerTestCase(unittest.TestCase):
+    """
+    Most of the tests are in the XMLTreeServerTestCase,
+    but to test integration with XML directly (argument passing and such),
+    a few test cases here.
+    """
     
     def setUp(self):
         self._server = self.getXMLServer()
