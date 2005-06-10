@@ -6,7 +6,7 @@ class FakeServer:
         data = []
         for i in range(100):
             data.append((common.Header(str(i), datetime.now(), '', False),
-                         common.Metadata({}),
+                         common.Metadata({'title': ['Title %s' % i]}),
                          None))
         self._data = data
 

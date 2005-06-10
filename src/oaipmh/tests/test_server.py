@@ -112,12 +112,47 @@ class ResumptionTestCase(unittest.TestCase):
         # we should find a resumptionToken element with text
         self.assert_(
             tree.xpath('//oai:resumptionToken/text()', {'oai': NS_OAIPMH} ))
+
+class ServerClient(client.BaseClient):
+    def __init__(self, server, metadata_registry=None):
+        client.BaseClient.__init__(self, metadata_registry)
+        self._server = server
+        
+    def makeRequest(self, **kw):
+        verb = kw.pop('verb')
+        method_name = verb[0].lower() + verb[1:]
+        return getattr(self._server, method_name)(**kw)
+        
+class ClientServerTestCase(unittest.TestCase):
+    def setUp(self):
+        self._fakeserver = fakeserver.FakeServer()
+        metadata_registry = metadata.MetadataRegistry()
+        metadata_registry.registerWriter('oai_dc', server.oai_dc_writer)
+        metadata_registry.registerReader('oai_dc', metadata.oai_dc_reader)
+        self._server = server.XMLServer(self._fakeserver, metadata_registry,
+                                        resumption_batch_size=7)
+        self._client = ServerClient(self._server, metadata_registry)
+
+    def test_listIdentifiers(self):
+        headers = self._client.listIdentifiers(metadataPrefix='oai_dc')
+        self.assertEquals([str(i) for i in range(100)],
+                          [header.identifier() for header in headers])
+
+    def test_listRecords(self):
+        records = self._client.listRecords(metadataPrefix='oai_dc')
+        metadatas = [metadata for (header, metadata, about) in records]
+        result = []
+        for metadata in metadatas:
+            result.append(metadata.getField('title')[0])
+        expected = ['Title %s' % i for i in range(100)]
+        self.assertEquals(expected, result)
         
 def test_suite():
     return unittest.TestSuite([
         unittest.makeSuite(XMLTreeServerTestCase),
         unittest.makeSuite(XMLServerTestCase),
-        unittest.makeSuite(ResumptionTestCase)])
+        unittest.makeSuite(ResumptionTestCase),
+        unittest.makeSuite(ClientServerTestCase)])
 
 if __name__=='__main__':
     main(defaultTest='test_suite')

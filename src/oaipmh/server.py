@@ -26,8 +26,8 @@ class XMLTreeServer:
 
     Takes an object conforming to the OAIPMH API.
     """
-    def __init__(self, server, metadata_registry):
-        self._server = Resumption(server)
+    def __init__(self, server, metadata_registry, resumption_batch_size=10):
+        self._server = Resumption(server, resumption_batch_size)
         self._metadata_registry = (
             metadata_registry or metadata.global_metadata_registry)
         
@@ -90,7 +90,7 @@ class XMLTreeServer:
     def listIdentifiers(self, **kw):
         envelope, e_listIdentifiers = self._outputEnvelope(
             verb='ListIdentifiers', **kw)
-        def outputFunc(element, headers):
+        def outputFunc(element, headers, token_kw):
             for header in headers:
                 self._outputHeader(element, header)
         self._outputResuming(
@@ -103,8 +103,8 @@ class XMLTreeServer:
     def listRecords(self, **kw):
         envelope, e_listRecords = self._outputEnvelope(
             verb="ListRecords", **kw)
-        metadataPrefix = kw['metadataPrefix']
-        def outputFunc(element, records):
+        def outputFunc(element, records, token_kw):
+            metadataPrefix = token_kw['metadataPrefix']
             for header, metadata, about in records:
                 e_record = SubElement(e_listRecords, nsoai('record'))
                 self._outputHeader(e_record, header)   
@@ -120,7 +120,7 @@ class XMLTreeServer:
     def listSets(self, **kw):
         envelope, e_listSets = self._outputEnvelope(
             verb='ListSets', **kw)
-        def outputFunc(element, sets):
+        def outputFunc(element, sets, token_kw):
             for setSpec, setName, setDescription in sets:
                 e_set = SubElement(e_listSets, nsoai('set'))
                 e_setSpec = SubElement(e_set, nsoai('setSpec'))
@@ -158,10 +158,15 @@ class XMLTreeServer:
     
     def _outputResuming(self, element, input_func, output_func, kw):
         if 'resumptionToken' in kw:
-            result, token = input_func(resumptionToken=kw['resumptionToken'])
+            resumptionToken = kw['resumptionToken']
+            result, token = input_func(resumptionToken=resumptionToken)
+            # unpack keywords from resumption token
+            token_kw, dummy = decodeResumptionToken(resumptionToken)
         else:
             result, token = input_func(**kw)
-        output_func(element, result)
+            # without resumption token keys are fine
+            token_kw = kw
+        output_func(element, result, token_kw)
         if token is not None:
             e_resumptionToken = SubElement(element, nsoai('resumptionToken'))
             e_resumptionToken.text = token
@@ -186,8 +191,10 @@ class XMLServer(common.ResumptionOAIPMH):
 
     Takes a server object.
     """
-    def __init__(self, server, metadata_registry=None):
-        self._tree_server = XMLTreeServer(server, metadata_registry)
+    def __init__(self, server, metadata_registry=None,
+                 resumption_batch_size=10):
+        self._tree_server = XMLTreeServer(server, metadata_registry,
+                                          resumption_batch_size)
 
     def handleVerb(self, verb, args, kw):
         method_name = verb[0].lower() + verb[1:]
@@ -211,26 +218,13 @@ class Resumption(common.ResumptionOAIPMH):
     def __init__(self, server, batch_size=10):
         self._server = server
         self._batch_size = batch_size
-
-    def encodeResumptionToken(self, kw, cursor):
-        kw = kw.copy()
-        kw['cursor'] = str(cursor)
-        return urlencode(kw)
-
-    def decodeResumptionToken(self, token):
-        kw = cgi.parse_qs(token, True)
-        result = {}
-        for key, value in kw.items():
-            result[key] = value[0]
-        cursor = int(result.pop('cursor'))
-        return result, cursor
     
     def handleVerb(self, verb, args, kw):
         # do original query
         method_name = verb[0].lower() + verb[1:]
         # if we're handling a resumption token
         if 'resumptionToken' in kw:
-            kw, cursor = self.decodeResumptionToken(
+            kw, cursor = decodeResumptionToken(
                 kw['resumptionToken'])
             end_batch = cursor + self._batch_size
             # do query again with original parameters
@@ -238,7 +232,7 @@ class Resumption(common.ResumptionOAIPMH):
             # XXX defeat laziness of any generators..
             result = list(result)
             if end_batch < len(result):
-                resumptionToken = self.encodeResumptionToken(
+                resumptionToken = encodeResumptionToken(
                     kw, end_batch)
             else:
                 resumptionToken = None
@@ -251,12 +245,25 @@ class Resumption(common.ResumptionOAIPMH):
             result = list(result)
             end_batch = self._batch_size
             if end_batch < len(result):
-                resumptionToken = self.encodeResumptionToken(
+                resumptionToken = encodeResumptionToken(
                     kw, end_batch)
             else:
                 resumptionToken = None
             return result[0:end_batch], resumptionToken
         return result
+
+def encodeResumptionToken(kw, cursor):
+    kw = kw.copy()
+    kw['cursor'] = str(cursor)
+    return urlencode(kw)
+
+def decodeResumptionToken(token):
+    kw = cgi.parse_qs(token, True)
+    result = {}
+    for key, value in kw.items():
+        result[key] = value[0]
+    cursor = int(result.pop('cursor'))
+    return result, cursor
     
 def oai_dc_writer(element, metadata):
     e_dc = SubElement(element, nsoaidc('dc'))
