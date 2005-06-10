@@ -54,6 +54,10 @@ class XMLTreeServerTestCase(unittest.TestCase):
             metadataPrefix='oai_dc')
         self.assert_(oaischema.validate(tree))
 
+    def test_listSets(self):
+        tree = self._server.listSets()
+        self.assert_(oaischema.validate(tree))
+        
 class XMLServerTestCase(unittest.TestCase):
     """
     Most of the tests are in the XMLTreeServerTestCase,

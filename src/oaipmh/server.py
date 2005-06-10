@@ -118,8 +118,22 @@ class XMLTreeServer:
         return envelope
 
     def listSets(self, **kw):
-        # XXX
-        raise NotImplementedError
+        envelope, e_listSets = self._outputEnvelope(
+            verb='ListSets', **kw)
+        def outputFunc(element, sets):
+            for setSpec, setName, setDescription in sets:
+                e_set = SubElement(e_listSets, nsoai('set'))
+                e_setSpec = SubElement(e_set, nsoai('setSpec'))
+                e_setSpec.text = setSpec
+                e_setName = SubElement(e_set, nsoai('setName'))
+                e_setName.text = setName
+                # XXX ignore setDescription
+        self._outputResuming(
+            e_listSets,
+            self._server.listSets,
+            outputFunc,
+            kw)
+        return envelope
 
     def _outputEnvelope(self, **kw):
         e_oaipmh = Element(nsoai('OAI-PMH'), nsmap=nsmap)
