@@ -19,7 +19,7 @@ class FakeServer:
             earliestDatestamp=datetime(2005, 1, 1),
             deletedRecord='transient',
             granularity='YYYY-MM-DDThh:mm:ssZ',
-            compression='identity')
+            compression=['identity'])
     
     def listIdentifiers(self, metadataPrefix=None, from_=None, until=None,
                         set=None):
