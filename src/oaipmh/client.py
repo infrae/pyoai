@@ -239,7 +239,7 @@ class Client(BaseClient):
         """Actually retrieve XML from the server.
         """
         # XXX include From header?
-        headers = {'User-Agent': 'Infrae-oaipmh',
+        headers = {'User-Agent': 'pyoai',
                    }
         request = urllib2.Request(self._base_url, urlencode(kw), headers)
         return retrieveFromUrlWaiting(request)
