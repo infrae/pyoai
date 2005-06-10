@@ -69,6 +69,8 @@ class ServerIdentify:
         return self._compression
 
 def datetime_to_datestamp(dt):
+    # ignore microsends
+    dt = dt.replace(microsecond=0)
     return dt.isoformat() + 'Z'
     
 def datestamp_to_datetime(datestamp):
