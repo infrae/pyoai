@@ -27,8 +27,7 @@ class XMLTreeServerTestCase(unittest.TestCase):
         myserver = fakeclient.FakeClient(fake1)
         metadata_registry = metadata.MetadataRegistry()
         metadata_registry.registerWriter('oai_dc', server.oai_dc_writer)
-        return server.XMLTreeServer(common.Resumption(myserver),
-                                    metadata_registry)
+        return server.XMLTreeServer(myserver, metadata_registry)
 
     def test_getRecord(self):
         tree = self._server.getRecord(
@@ -71,7 +70,7 @@ class XMLServerTestCase(unittest.TestCase):
         myserver = fakeclient.FakeClient(fake1)
         metadata_registry = metadata.MetadataRegistry()
         metadata_registry.registerWriter('oai_dc', server.oai_dc_writer)
-        return server.XMLServer(common.Resumption(myserver), metadata_registry)
+        return server.XMLServer(myserver, metadata_registry)
 
     def test_identify(self):
         xml = self._server.identify()
@@ -88,7 +87,7 @@ class XMLServerTestCase(unittest.TestCase):
 class ResumptionTestCase(unittest.TestCase):
     def setUp(self):
         self._fakeserver = fakeserver.FakeServer()
-        self._server = common.Resumption(self._fakeserver, 10)
+        self._server = server.Resumption(self._fakeserver, 10)
 
     def test_resumption(self):
         headers = []
@@ -103,7 +102,7 @@ class ResumptionTestCase(unittest.TestCase):
     def test_tree_resumption(self):
         metadata_registry = metadata.MetadataRegistry()
         metadata_registry.registerWriter('oai_dc', server.oai_dc_writer)
-        myserver = server.XMLTreeServer(self._server, metadata_registry)
+        myserver = server.XMLTreeServer(self._fakeserver, metadata_registry)
         tree = myserver.listIdentifiers(metadataPrefix='oai_dc')
         self.assert_(oaischema.validate(tree))
         # we should find a resumptionToken element with text

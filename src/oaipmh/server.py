@@ -1,6 +1,8 @@
 from lxml.etree import ElementTree, Element, SubElement
 from lxml import etree
 from datetime import datetime
+from urllib import urlencode
+import cgi
 
 from oaipmh import common, metadata
 
@@ -22,10 +24,10 @@ class XMLTreeServer:
     This is an implementation class that normally would not be exposed
     to the outside world.
 
-    Takes an object conforming to the ResumptionOAIPMH API.
+    Takes an object conforming to the OAIPMH API.
     """
     def __init__(self, server, metadata_registry):
-        self._server = server
+        self._server = Resumption(server)
         self._metadata_registry = (
             metadata_registry or metadata.global_metadata_registry)
         
@@ -177,6 +179,70 @@ class XMLServer(common.ResumptionOAIPMH):
         method_name = verb[0].lower() + verb[1:]
         return etree.tostring(
             getattr(self._tree_server, method_name)(**kw).getroot())
+
+class Resumption(common.ResumptionOAIPMH):
+    """There are two interfaces:
+
+    OAIPMH
+
+    ResumptionOAIPMH
+
+    The Resumption class can turn a plain OAIPMH interface into
+    a ResumptionOAIPMH interface
+
+    This implementation is not particularly efficient for large
+    result sets, as the complete result set needs to be reconstructed each
+    time.
+    """
+    def __init__(self, server, batch_size=10):
+        self._server = server
+        self._batch_size = batch_size
+
+    def encodeResumptionToken(self, kw, cursor):
+        kw = kw.copy()
+        kw['cursor'] = str(cursor)
+        return urlencode(kw)
+
+    def decodeResumptionToken(self, token):
+        kw = cgi.parse_qs(token, True)
+        result = {}
+        for key, value in kw.items():
+            result[key] = value[0]
+        cursor = int(result.pop('cursor'))
+        return result, cursor
+    
+    def handleVerb(self, verb, args, kw):
+        # do original query
+        method_name = verb[0].lower() + verb[1:]
+        # if we're handling a resumption token
+        if 'resumptionToken' in kw:
+            kw, cursor = self.decodeResumptionToken(
+                kw['resumptionToken'])
+            end_batch = cursor + self._batch_size
+            # do query again with original parameters
+            result = getattr(self._server, method_name)(**kw)
+            # XXX defeat laziness of any generators..
+            result = list(result)
+            if end_batch < len(result):
+                resumptionToken = self.encodeResumptionToken(
+                    kw, end_batch)
+            else:
+                resumptionToken = None
+            return result[cursor:end_batch], resumptionToken
+        # we're not handling resumption token, so do request
+        result = getattr(self._server, method_name)(**kw)
+        # now handle resumption system
+        if verb in ['ListSets', 'ListIdentifiers', 'ListRecords']:
+            # XXX defeat the laziness effect of any generators..
+            result = list(result)
+            end_batch = self._batch_size
+            if end_batch < len(result):
+                resumptionToken = self.encodeResumptionToken(
+                    kw, end_batch)
+            else:
+                resumptionToken = None
+            return result[0:end_batch], resumptionToken
+        return result
     
 def oai_dc_writer(element, metadata):
     e_dc = SubElement(element, nsoaidc('dc'))
