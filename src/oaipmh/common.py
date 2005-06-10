@@ -255,3 +255,9 @@ class ResumptionOAIPMH:
         {'resumptionToken':'exclusive',
          },
         )
+
+def getMethodForVerb(server, verb):
+    assert verb in ['GetRecord', 'Identify', 'ListIdentifiers',
+                    'ListMetadataFormats', 'ListRecords', 'ListSets']
+    return getattr(server, verb[0].lower() + verb[1:])
+

@@ -120,8 +120,8 @@ class ServerClient(client.BaseClient):
         
     def makeRequest(self, **kw):
         verb = kw.pop('verb')
-        method_name = verb[0].lower() + verb[1:]
-        return getattr(self._server, method_name)(**kw)
+        method = common.getMethodForVerb(self._server, verb)
+        return method(**kw)
         
 class ClientServerTestCase(unittest.TestCase):
     def setUp(self):

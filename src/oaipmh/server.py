@@ -197,9 +197,8 @@ class XMLServer(common.ResumptionOAIPMH):
                                           resumption_batch_size)
 
     def handleVerb(self, verb, args, kw):
-        method_name = verb[0].lower() + verb[1:]
-        return etree.tostring(
-            getattr(self._tree_server, method_name)(**kw).getroot())
+        method = common.getMethodForVerb(self._tree_server, verb)
+        return etree.tostring(method(**kw).getroot())
 
 class Resumption(common.ResumptionOAIPMH):
     """There are two interfaces:
@@ -221,14 +220,14 @@ class Resumption(common.ResumptionOAIPMH):
     
     def handleVerb(self, verb, args, kw):
         # do original query
-        method_name = verb[0].lower() + verb[1:]
+        method = common.getMethodForVerb(self._server, verb)
         # if we're handling a resumption token
         if 'resumptionToken' in kw:
             kw, cursor = decodeResumptionToken(
                 kw['resumptionToken'])
             end_batch = cursor + self._batch_size
             # do query again with original parameters
-            result = getattr(self._server, method_name)(**kw)
+            result = method(**kw)
             # XXX defeat laziness of any generators..
             result = list(result)
             if end_batch < len(result):
@@ -238,7 +237,7 @@ class Resumption(common.ResumptionOAIPMH):
                 resumptionToken = None
             return result[cursor:end_batch], resumptionToken
         # we're not handling resumption token, so do request
-        result = getattr(self._server, method_name)(**kw)
+        result = method(**kw)
         # now handle resumption system
         if verb in ['ListSets', 'ListIdentifiers', 'ListRecords']:
             # XXX defeat the laziness effect of any generators..
