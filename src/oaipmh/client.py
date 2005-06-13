@@ -8,7 +8,7 @@ from types import SliceType
 from lxml import etree
 import time
 
-from oaipmh import common, metadata
+from oaipmh import common, metadata, validation
 
 WAIT_DEFAULT = 120 # two minutes
 WAIT_MAX = 5
@@ -22,11 +22,14 @@ class BaseClient(common.OAIPMH):
         self._metadata_registry = (
             metadata_registry or metadata.global_metadata_registry)
         self._ignore_bad_character_hack = 0
-
-    def handleVerb(self, verb, args, kw):
+    
+    def handleVerb(self, verb, kw):
+        # validate kw first
+        validation.validateArguments(verb, kw)
+        # now call underlying implementation
         method_name = verb + '_impl'
         return getattr(self, method_name)(
-            args, self.makeRequest(verb=verb, **kw))    
+            kw, self.makeRequest(verb=verb, **kw))    
 
     def getNamespaces(self):
         """Get OAI namespaces.

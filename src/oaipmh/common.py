@@ -87,65 +87,24 @@ def datestamp_to_datetime(datestamp):
     return datetime.datetime(
         int(YYYY), int(MM), int(DD),
         int(hh), int(mm), int(ss))
-
-class BadArgumentError(Exception):
-    pass
-
-class ArgumentValidator:
     
-    def __init__(self, argspec):
-        self._argspec = argspec
-        self._exclusive = None
-        for arg_name, arg_type in argspec.items():
-            if arg_type == 'exclusive':
-                self._exclusive = arg_name
-
-    def validate(self, dict):
-        argspec = self._argspec
-        # first filter out any local arguments, which will be returned
-        local = {}
-        for arg_name, arg_type in argspec.items():
-            if arg_type == 'local' and dict.has_key(arg_name):
-                local[arg_name] = dict[arg_name]
-                del dict[arg_name]
-        # check if we have unknown arguments
-        for key, value in dict.items():
-            if not argspec.has_key(key):
-                msg = "Unknown argument: %s" % key
-                raise BadArgumentError, msg
-        # first investigate if we have exclusive argument
-        if dict.has_key(self._exclusive):
-            if len(dict) > 1:
-                msg = ("Exclusive argument %s is used but other "
-                       "arguments found." % self._exclusive)
-                raise BadArgumentError, msg
-            return local
-        # if not exclusive, check for required
-        for arg_name, arg_type in argspec.items(): 
-            if arg_type == 'required':
-                msg = "Argument required but not found: %s" % arg_name
-                if not dict.has_key(arg_name):
-                    raise BadArgumentError, msg 
-        return local
+def ResumptionTokenSpec(dict):
+    dict = dict.copy()
+    dict['resumptionToken'] = 'exclusive'
+    return dict
 
 class OAIMethodImpl(object):
-    def __init__(self, verb, argspec):
+    def __init__(self, verb):
         self._verb = verb
-        self._validator = ArgumentValidator(argspec)
-
+        
     def __call__(self, bound_self, **kw):
         if kw.has_key('from_'):
             kw['from'] = kw['from_']
             del kw['from_']
-        local = self._validator.validate(kw)
-        # reconstruct all arguments (including local)
-        args = kw.copy()
-        args.update(local)
-        # now call handler
-        return bound_self.handleVerb(self._verb, args, kw)
+        return bound_self.handleVerb(self._verb, kw)
         
-def OAIMethod(verb, argspec):
-    obj = OAIMethodImpl(verb, argspec)
+def OAIMethod(verb):
+    obj = OAIMethodImpl(verb)
     def method(self, **kw):
         return obj(self, **kw)
     return method
@@ -154,106 +113,73 @@ class OAIPMH:
     """Mixin that implements the Python-level OAI-PMH interface.
 
     It does not include resumptionToken handling.
-
-    It validates method calls and passes them on to the 'handleVerb'
-    method, which should be overridden in a subclass.
+    
+    It passes the calls on to the 'handleVerb' method, which should be
+    overridden in a subclass.
     """
-    def handleVerb(self, verb, args, kw):
+    def handleVerb(self, verb, kw):
         raise NotImplementedError
     
     getRecord = OAIMethod(
         'GetRecord',
-        {'identifier':'required',
-        'metadataPrefix':'required'},
         )
     
     identify = OAIMethod(
         'Identify',
-        {},
         )
 
     listIdentifiers = OAIMethod(
         'ListIdentifiers',
-        {'from':'optional',
-         'until':'optional',
-         'metadataPrefix':'required',
-         'set':'optional',
-         },
         )
 
     listMetadataFormats = OAIMethod(
         'ListMetadataFormats',
-        {'identifier':'optional'},
         )
 
     listRecords = OAIMethod(
         'ListRecords',
-        {'from':'optional',
-         'until':'optional',
-         'set':'optional',
-         'metadataPrefix':'required',
-         },
         )
 
     listSets = OAIMethod(
         'ListSets',
-        {},
         )
-
+    
 class ResumptionOAIPMH:
     """Mixin that implements the Resumption-capable OAI-PMH interface.
 
-    It validates method calls and passes them on to the 'handleVerb'
-    method, which should be overridden in a subclass.
+    It passes the arguments on to the 'handleVerb' method, which
+    should be overridden in a subclass.
 
     The listIdentifiers, listSets and listRecords methods return
     tuples of a list and resumptionToken. If the resumptionToken
     returned is None, this indicates the end of the list is reached.
     """
 
-    def handleVerb(self, verb, args, kw):
+    def handleVerb(self, verb, kw):
         raise NotImplementedError
     
     getRecord = OAIMethod(
         'GetRecord',
-        {'identifier':'required',
-        'metadataPrefix':'required'},
         )
     
     identify = OAIMethod(
         'Identify',
-        {},
         )
 
     listIdentifiers = OAIMethod(
         'ListIdentifiers',
-        {'from':'optional',
-         'until':'optional',
-         'metadataPrefix':'required',
-         'set':'optional',
-         'resumptionToken':'exclusive',
-         },
         )
 
     listMetadataFormats = OAIMethod(
         'ListMetadataFormats',
-        {'identifier':'optional'},
         )
 
     listRecords = OAIMethod(
         'ListRecords',
-        {'from':'optional',
-         'until':'optional',
-         'set':'optional',
-         'resumptionToken':'exclusive',
-         'metadataPrefix':'required',
-         },
         )
 
     listSets = OAIMethod(
         'ListSets',
-        {'resumptionToken':'exclusive',
-         },
         )
 
 def getMethodForVerb(server, verb):

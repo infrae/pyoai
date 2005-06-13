@@ -4,7 +4,7 @@ from datetime import datetime
 from urllib import urlencode
 import sys, cgi
 
-from oaipmh import common, metadata
+from oaipmh import common, metadata, validation
 
 NS_OAIPMH = 'http://www.openarchives.org/OAI/2.0/'
 NS_XSI = 'http://www.w3.org/2001/XMLSchema-instance'
@@ -136,17 +136,9 @@ class XMLTreeServer:
         return envelope
 
     def handleException(self, verb, exception):
-        if isinstance(exception, BadArgumentError):
+        if isinstance(exception, ServerErrorBase):
             envelope = self._outputErrors(
-                [('badArgument', str(exception))])
-            return envelope
-        elif isinstance(exception, BadVerbError):
-            envelope = self._outputErrors(
-                [('badVerb', str(exception))])
-            return envelope
-        elif isinstance(exception, BadResumptionTokenError):
-            envelope = self._outputErrors(
-                [('badResumptionToken', str(exception))])
+                [(exception.oainame(), str(exception))])
             return envelope
         # unhandled exception, so raise again
         raise
@@ -211,6 +203,9 @@ class XMLTreeServer:
         
     def _outputMetadata(self, element, metadata_prefix, metadata):
         e_metadata = SubElement(element, nsoai('metadata'))
+        if not self._metadata_registry.hasWriter(metadata_prefix):
+            raise CannotDisseminateFormatError,\
+                  "Unknown metadata format: %s" % metadata_prefix
         self._metadata_registry.writeMetadata(
             metadata_prefix, e_metadata, metadata)
 
@@ -240,15 +235,18 @@ class XMLServer(common.ResumptionOAIPMH):
             if verb not in ['GetRecord', 'Identify', 'ListIdentifiers',
                             'ListMetadataFormats', 'ListRecords', 'ListSets']:
                 raise BadVerbError, "Illegal verb: %s" % verb
-            # delegates to verb handler (common.ResumptionOAIPMH),
-            # which in turn will delegate to handleVerb on this class,
-            # after validation of arguments
-            common.getMethodForVerb(self, verb)(**request_kw)
+            try:
+                validation.validateResumptionArguments(verb, request_kw)
+            except validation.BadArgumentError, e:
+                # have to raise this as a server.BadArgumentError
+                raise BadArgumentError, str(e)
+            # now handle verb
+            self.handleVerb(verb, request_kw)            
         except:
             # in case of exception, call exception handler
             return self.handleException(verb, request_kw, sys.exc_info())
         
-    def handleVerb(self, verb, args, kw):
+    def handleVerb(self, verb, kw):
         method = common.getMethodForVerb(self._tree_server, verb)
         return etree.tostring(method(**kw).getroot())    
 
@@ -275,7 +273,7 @@ class Resumption(common.ResumptionOAIPMH):
         self._server = server
         self._batch_size = batch_size
     
-    def handleVerb(self, verb, args, kw):
+    def handleVerb(self, verb, kw):
         # do original query
         method = common.getMethodForVerb(self._server, verb)
         # if we're handling a resumption token
@@ -312,7 +310,6 @@ def encodeResumptionToken(kw, cursor):
     kw = kw.copy()
     kw['cursor'] = str(cursor)
     return urlencode(kw)
-
 
 def decodeResumptionToken(token):
     try:
@@ -354,10 +351,23 @@ def nsoaidc(name):
 def nsdc(name):
     return '{%s}%s' % (NS_DC, name)
 
-BadArgumentError = common.BadArgumentError
+class ServerErrorBase(Exception):
+    def oainame(self):
+        name = self.__class__.__name__
+        # strip off 'Error' part
+        name = name[:-5]
+        # lowercase error name
+        name = name[0].lower() + name[1:]
+        return name
 
-class BadVerbError(Exception):
+class BadArgumentError(ServerErrorBase):
     pass
 
-class BadResumptionTokenError(Exception):
+class BadVerbError(ServerErrorBase):
+    pass
+
+class BadResumptionTokenError(ServerErrorBase):
+    pass
+
+class CannotDisseminateFormatError(ServerErrorBase):
     pass

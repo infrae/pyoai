@@ -21,6 +21,12 @@ class MetadataRegistry:
     def registerWriter(self, metadata_prefix, writer):
         self._writers[metadata_prefix] = writer
 
+    def hasReader(self, metadata_prefix):
+        return metadata_prefix in self._readers
+    
+    def hasWriter(self, metadata_prefix):
+        return metadata_prefix in self._writers
+    
     def readMetadata(self, metadata_prefix, element):
         """Turn XML into metadata object.
 

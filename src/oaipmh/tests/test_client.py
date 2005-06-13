@@ -2,7 +2,7 @@ from unittest import TestCase, TestSuite, main, makeSuite
 from fakeclient import FakeClient
 import os
 from datetime import datetime
-from oaipmh import common, metadata
+from oaipmh import common, metadata, validation
 
 directory = os.path.dirname(__file__)
 fake1 = os.path.join(directory, 'fake1')
@@ -69,7 +69,7 @@ class ClientTestCase(TestCase):
 
     def test_listIdentifiers_argument_error(self):
         self.assertRaises(
-            common.BadArgumentError,
+            validation.BadArgumentError,
             fakeclient.listIdentifiers,
             foo='bar')
         

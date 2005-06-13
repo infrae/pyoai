@@ -173,6 +173,14 @@ class ErrorTestCase(unittest.TestCase):
         self.assertErrors(
             [('badResumptionToken',
              'Unable to decode resumption token: foobar')], xml)
+
+    def test_cannotDisseminateFormat(self):
+        xml = self._server.handleRequest({'verb': 'ListRecords',
+                                          'metadataPrefix': 'nonexistent'})
+        self.assertErrors(
+            [('cannotDisseminateFormat',
+              'Unknown metadata format: nonexistent')],
+            xml)
         
     def assertErrors(self, errors, xml):
         self.assertEquals(errors, self.findErrors(xml))
