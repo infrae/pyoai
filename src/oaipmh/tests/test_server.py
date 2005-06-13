@@ -181,7 +181,10 @@ class ErrorTestCase(unittest.TestCase):
             [('cannotDisseminateFormat',
               'Unknown metadata format: nonexistent')],
             xml)
-        
+
+    def test_idDoesNotExist(self):
+        pass
+    
     def assertErrors(self, errors, xml):
         self.assertEquals(errors, self.findErrors(xml))
         

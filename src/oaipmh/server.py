@@ -4,7 +4,7 @@ from datetime import datetime
 from urllib import urlencode
 import sys, cgi
 
-from oaipmh import common, metadata, validation
+from oaipmh import common, metadata, validation, error
 
 NS_OAIPMH = 'http://www.openarchives.org/OAI/2.0/'
 NS_XSI = 'http://www.w3.org/2001/XMLSchema-instance'
@@ -136,7 +136,7 @@ class XMLTreeServer:
         return envelope
 
     def handleException(self, verb, exception):
-        if isinstance(exception, ServerErrorBase):
+        if isinstance(exception, error.ErrorBase):
             envelope = self._outputErrors(
                 [(exception.oainame(), str(exception))])
             return envelope
@@ -204,7 +204,7 @@ class XMLTreeServer:
     def _outputMetadata(self, element, metadata_prefix, metadata):
         e_metadata = SubElement(element, nsoai('metadata'))
         if not self._metadata_registry.hasWriter(metadata_prefix):
-            raise CannotDisseminateFormatError,\
+            raise error.CannotDisseminateFormatError,\
                   "Unknown metadata format: %s" % metadata_prefix
         self._metadata_registry.writeMetadata(
             metadata_prefix, e_metadata, metadata)
@@ -230,16 +230,16 @@ class XMLServer(common.ResumptionOAIPMH):
             try:
                 verb = request_kw.pop('verb')
             except KeyError:
-                raise BadVerbError,\
+                raise error.BadVerbError,\
                       "Required verb argument not found."
             if verb not in ['GetRecord', 'Identify', 'ListIdentifiers',
                             'ListMetadataFormats', 'ListRecords', 'ListSets']:
-                raise BadVerbError, "Illegal verb: %s" % verb
+                raise error.BadVerbError, "Illegal verb: %s" % verb
             try:
                 validation.validateResumptionArguments(verb, request_kw)
             except validation.BadArgumentError, e:
-                # have to raise this as a server.BadArgumentError
-                raise BadArgumentError, str(e)
+                # have to raise this as a error.BadArgumentError
+                raise error.BadArgumentError, str(e)
             # now handle verb
             self.handleVerb(verb, request_kw)            
         except:
@@ -315,7 +315,7 @@ def decodeResumptionToken(token):
     try:
         kw = cgi.parse_qs(token, True, True)
     except ValueError:
-        raise BadResumptionTokenError,\
+        raise error.BadResumptionTokenError,\
               "Unable to decode resumption token: %s" % token
     result = {}
     for key, value in kw.items():
@@ -323,7 +323,7 @@ def decodeResumptionToken(token):
     try:
         cursor = int(result.pop('cursor'))
     except (KeyError, ValueError):
-        raise BadResumptionTokenError,\
+        raise error.BadResumptionTokenError,\
               "Unable to decode resumption token (bad cursor): %s" % token
     # XXX should also validate result contents. Need verb information
     # for this, and somewhat more flexible verb validation support
@@ -350,24 +350,3 @@ def nsoaidc(name):
 
 def nsdc(name):
     return '{%s}%s' % (NS_DC, name)
-
-class ServerErrorBase(Exception):
-    def oainame(self):
-        name = self.__class__.__name__
-        # strip off 'Error' part
-        name = name[:-5]
-        # lowercase error name
-        name = name[0].lower() + name[1:]
-        return name
-
-class BadArgumentError(ServerErrorBase):
-    pass
-
-class BadVerbError(ServerErrorBase):
-    pass
-
-class BadResumptionTokenError(ServerErrorBase):
-    pass
-
-class CannotDisseminateFormatError(ServerErrorBase):
-    pass
