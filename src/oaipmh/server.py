@@ -2,7 +2,7 @@ from lxml.etree import ElementTree, Element, SubElement
 from lxml import etree
 from datetime import datetime
 from urllib import urlencode
-import cgi
+import sys, cgi
 
 from oaipmh import common, metadata
 
@@ -135,7 +135,19 @@ class XMLTreeServer:
             kw)
         return envelope
 
-    def _outputEnvelope(self, **kw):
+    def handleException(self, verb, exception):
+        if isinstance(exception, common.BadArgumentError):
+            envelope = self._outputErrors(
+                [('badArgument', str(exception))])
+            return envelope
+        elif isinstance(exception, common.BadVerbError):
+            envelope = self._outputErrors(
+                [('badVerb', str(exception))])
+            return envelope
+        # unhandled exception, so raise again
+        raise
+    
+    def _outputBasicEnvelope(self, **kw):
         e_oaipmh = Element(nsoai('OAI-PMH'), nsmap=nsmap)
         e_oaipmh.set('{%s}schemaLocation' % NS_XSI,
                      ('http://www.openarchives.org/OAI/2.0/ '
@@ -146,15 +158,27 @@ class XMLTreeServer:
         e_responseDate.text = common.datetime_to_datestamp(
             datetime.utcnow().replace(microsecond=0))
         e_request = SubElement(e_oaipmh, nsoai('request'))
-        # XXX shouldn't output this if we had an error
         for key, value in kw.items():
             if key == 'from_':
                 key = 'from'
             e_request.set(key, value)
         # XXX this is potentially slow..
         e_request.text = self._server.identify().baseURL()
+        return e_tree, e_oaipmh
+    
+    def _outputEnvelope(self, **kw):
+        e_tree, e_oaipmh = self._outputBasicEnvelope(**kw)
         e_element = SubElement(e_oaipmh, nsoai(kw['verb']))
         return e_tree, e_element
+
+    def _outputErrors(self, errors, **kw):
+        # only pass functional arguments
+        e_tree, e_oaipmh = self._outputBasicEnvelope(**kw)
+        for error_code, error_msg in errors:
+            e_error = SubElement(e_oaipmh, nsoai('error'))
+            e_error.set('code', error_code)
+            e_error.text = error_msg
+        return e_tree
     
     def _outputResuming(self, element, input_func, output_func, kw):
         if 'resumptionToken' in kw:
@@ -185,21 +209,50 @@ class XMLTreeServer:
         e_metadata = SubElement(element, nsoai('metadata'))
         self._metadata_registry.writeMetadata(
             metadata_prefix, e_metadata, metadata)
-        
+
 class XMLServer(common.ResumptionOAIPMH):
     """A server that responds to messages by returning OAI-PMH compliant XML.
 
-    Takes a server object.
+    Takes a server object complying with the OAIPMH interface.
     """
     def __init__(self, server, metadata_registry=None,
                  resumption_batch_size=10):
         self._tree_server = XMLTreeServer(server, metadata_registry,
                                           resumption_batch_size)
 
+    def handleRequest(self, request_kw):
+        """Handles incoming OAI-PMH request.
+
+        request_kw is a dictionary containing request parameters, including
+        verb.
+        """
+        # try to get verb, if not, we have an argument handling error
+        try:
+            try:
+                verb = request_kw.pop('verb')
+            except KeyError:
+                raise common.BadVerbError,\
+                      "Required verb argument not found."
+            if verb not in ['GetRecord', 'Identify', 'ListIdentifiers',
+                            'ListMetadataFormats', 'ListRecords', 'ListSets']:
+                raise common.BadVerbError, "Illegal verb: %s" % verb
+            # delegates to verb handler (common.ResumptionOAIPMH),
+            # which in turn will delegate to handleVerb on this class,
+            # after validation of arguments
+            common.getMethodForVerb(self, verb)(**request_kw)
+        except:
+            # in case of exception, call exception handler
+            return self.handleException(verb, request_kw, sys.exc_info())
+        
     def handleVerb(self, verb, args, kw):
         method = common.getMethodForVerb(self._tree_server, verb)
-        return etree.tostring(method(**kw).getroot())
+        return etree.tostring(method(**kw).getroot())    
 
+    def handleException(self, verb, kw, exc_info):
+        type, value, traceback = exc_info
+        return etree.tostring(
+            self._tree_server.handleException(verb, value).getroot())
+    
 class Resumption(common.ResumptionOAIPMH):
     """There are two interfaces:
 

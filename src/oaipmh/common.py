@@ -88,7 +88,10 @@ def datestamp_to_datetime(datestamp):
         int(YYYY), int(MM), int(DD),
         int(hh), int(mm), int(ss))
 
-class ArgumentValidationError(Exception):
+class BadArgumentError(Exception):
+    pass
+
+class BadVerbError(Exception):
     pass
 
 class ArgumentValidator:
@@ -112,20 +115,20 @@ class ArgumentValidator:
         for key, value in dict.items():
             if not argspec.has_key(key):
                 msg = "Unknown argument: %s" % key
-                raise ArgumentValidationError, msg
+                raise BadArgumentError, msg
         # first investigate if we have exclusive argument
         if dict.has_key(self._exclusive):
             if len(dict) > 1:
                 msg = ("Exclusive argument %s is used but other "
                        "arguments found." % self._exclusive)
-                raise ArgumentValidationError, msg
+                raise BadArgumentError, msg
             return local
         # if not exclusive, check for required
         for arg_name, arg_type in argspec.items(): 
             if arg_type == 'required':
                 msg = "Argument required but not found: %s" % arg_name
                 if not dict.has_key(arg_name):
-                    raise ArgumentValidationError, msg 
+                    raise BadArgumentError, msg 
         return local
 
 class OAIMethodImpl(object):
@@ -143,7 +146,7 @@ class OAIMethodImpl(object):
         args.update(local)
         # now call handler
         return bound_self.handleVerb(self._verb, args, kw)
-
+        
 def OAIMethod(verb, argspec):
     obj = OAIMethodImpl(verb, argspec)
     def method(self, **kw):
@@ -160,7 +163,7 @@ class OAIPMH:
     """
     def handleVerb(self, verb, args, kw):
         raise NotImplementedError
-
+    
     getRecord = OAIMethod(
         'GetRecord',
         {'identifier':'required',
@@ -257,7 +260,5 @@ class ResumptionOAIPMH:
         )
 
 def getMethodForVerb(server, verb):
-    assert verb in ['GetRecord', 'Identify', 'ListIdentifiers',
-                    'ListMetadataFormats', 'ListRecords', 'ListSets']
     return getattr(server, verb[0].lower() + verb[1:])
 

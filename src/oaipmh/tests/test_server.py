@@ -146,13 +146,44 @@ class ClientServerTestCase(unittest.TestCase):
             result.append(metadata.getField('title')[0])
         expected = ['Title %s' % i for i in range(100)]
         self.assertEquals(expected, result)
+
+class ErrorTestCase(unittest.TestCase):
+    def setUp(self):
+        self._fakeserver = fakeserver.FakeServer()
+        metadata_registry = metadata.MetadataRegistry()
+        metadata_registry.registerWriter('oai_dc', server.oai_dc_writer)
+        metadata_registry.registerReader('oai_dc', metadata.oai_dc_reader)
+        self._server = server.XMLServer(self._fakeserver, metadata_registry,
+                                        resumption_batch_size=7)
+
+    def test_badArgument(self):
+        xml = self._server.handleRequest({'verb': 'Identify',
+                                          'foo' : 'Bar'})
+        self.assertErrors([('badArgument', 'Unknown argument: foo')],
+                          xml)
+
+    def test_badVerb(self):
+        xml = self._server.handleRequest({'verb': 'Frotz'})
+        self.assertErrors([('badVerb', 'Illegal verb: Frotz')], xml)
         
+    def assertErrors(self, errors, xml):
+        self.assertEquals(errors, self.findErrors(xml))
+        
+    def findErrors(self, xml):
+        result = []
+        for e in etree.parse(StringIO(xml)).xpath(
+            '//oai:error', {'oai': NS_OAIPMH}):
+            result.append((e.get('code'), e.text))
+        result.sort()
+        return result
+    
 def test_suite():
     return unittest.TestSuite([
         unittest.makeSuite(XMLTreeServerTestCase),
         unittest.makeSuite(XMLServerTestCase),
         unittest.makeSuite(ResumptionTestCase),
-        unittest.makeSuite(ClientServerTestCase)])
+        unittest.makeSuite(ClientServerTestCase),
+        unittest.makeSuite(ErrorTestCase)])
 
 if __name__=='__main__':
     main(defaultTest='test_suite')

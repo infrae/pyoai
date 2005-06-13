@@ -69,7 +69,7 @@ class ClientTestCase(TestCase):
 
     def test_listIdentifiers_argument_error(self):
         self.assertRaises(
-            common.ArgumentValidationError,
+            common.BadArgumentError,
             fakeclient.listIdentifiers,
             foo='bar')
         

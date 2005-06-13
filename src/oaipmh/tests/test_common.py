@@ -11,7 +11,7 @@ class ArgumentValidatorTestCase(unittest.TestCase):
             v.validate({'foo': 'Foo', 'bar': 'Bar'}))
         # an extra argument gives an error
         self.assertRaises(
-            common.ArgumentValidationError,
+            common.BadArgumentError,
             v.validate, {'hoi': 'Hoi', 'foo': 'Foo', 'bar': 'Bar'})
         # a missing optional argument is fine
         self.assertEquals(
@@ -32,7 +32,7 @@ class ArgumentValidatorTestCase(unittest.TestCase):
             {},
             v.validate({'foo': 'Foo'}))
         self.assertRaises(
-            common.ArgumentValidationError,
+            common.BadArgumentError,
             v.validate, {'bar': 'Bar'})
 
     def test_exclusive(self):
@@ -44,17 +44,17 @@ class ArgumentValidatorTestCase(unittest.TestCase):
             {},
             v.validate({'foo': 'Foo', 'bar': 'Bar'}))
         self.assertRaises(
-            common.ArgumentValidationError,
+            common.BadArgumentError,
             v.validate, {'foo': 'Foo'})
         self.assertRaises(
-            common.ArgumentValidationError,
+            common.BadArgumentError,
             v.validate, {'bar': 'Bar'})
         # or a single exclusive argument
         self.assertEquals(
             {},
             v.validate({'hoi': 'Hoi'}))
         self.assertRaises(
-            common.ArgumentValidationError,
+            common.BadArgumentError,
             v.validate, {'foo': 'Foo', 'hoi': 'Hoi'})
 
     def test_local(self):
