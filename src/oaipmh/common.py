@@ -91,9 +91,6 @@ def datestamp_to_datetime(datestamp):
 class BadArgumentError(Exception):
     pass
 
-class BadVerbError(Exception):
-    pass
-
 class ArgumentValidator:
     
     def __init__(self, argspec):

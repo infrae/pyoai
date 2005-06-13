@@ -161,10 +161,18 @@ class ErrorTestCase(unittest.TestCase):
                                           'foo' : 'Bar'})
         self.assertErrors([('badArgument', 'Unknown argument: foo')],
                           xml)
-
+        # need more tests for different variations (required, etc)
+        
     def test_badVerb(self):
         xml = self._server.handleRequest({'verb': 'Frotz'})
         self.assertErrors([('badVerb', 'Illegal verb: Frotz')], xml)
+
+    def test_badResumptionToken(self):
+        xml = self._server.handleRequest({'verb': 'ListRecords',
+                                          'resumptionToken': 'foobar'})
+        self.assertErrors(
+            [('badResumptionToken',
+             'Unable to decode resumption token: foobar')], xml)
         
     def assertErrors(self, errors, xml):
         self.assertEquals(errors, self.findErrors(xml))

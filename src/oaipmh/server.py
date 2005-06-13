@@ -136,13 +136,17 @@ class XMLTreeServer:
         return envelope
 
     def handleException(self, verb, exception):
-        if isinstance(exception, common.BadArgumentError):
+        if isinstance(exception, BadArgumentError):
             envelope = self._outputErrors(
                 [('badArgument', str(exception))])
             return envelope
-        elif isinstance(exception, common.BadVerbError):
+        elif isinstance(exception, BadVerbError):
             envelope = self._outputErrors(
                 [('badVerb', str(exception))])
+            return envelope
+        elif isinstance(exception, BadResumptionTokenError):
+            envelope = self._outputErrors(
+                [('badResumptionToken', str(exception))])
             return envelope
         # unhandled exception, so raise again
         raise
@@ -231,11 +235,11 @@ class XMLServer(common.ResumptionOAIPMH):
             try:
                 verb = request_kw.pop('verb')
             except KeyError:
-                raise common.BadVerbError,\
+                raise BadVerbError,\
                       "Required verb argument not found."
             if verb not in ['GetRecord', 'Identify', 'ListIdentifiers',
                             'ListMetadataFormats', 'ListRecords', 'ListSets']:
-                raise common.BadVerbError, "Illegal verb: %s" % verb
+                raise BadVerbError, "Illegal verb: %s" % verb
             # delegates to verb handler (common.ResumptionOAIPMH),
             # which in turn will delegate to handleVerb on this class,
             # after validation of arguments
@@ -309,12 +313,23 @@ def encodeResumptionToken(kw, cursor):
     kw['cursor'] = str(cursor)
     return urlencode(kw)
 
+
 def decodeResumptionToken(token):
-    kw = cgi.parse_qs(token, True)
+    try:
+        kw = cgi.parse_qs(token, True, True)
+    except ValueError:
+        raise BadResumptionTokenError,\
+              "Unable to decode resumption token: %s" % token
     result = {}
     for key, value in kw.items():
         result[key] = value[0]
-    cursor = int(result.pop('cursor'))
+    try:
+        cursor = int(result.pop('cursor'))
+    except (KeyError, ValueError):
+        raise BadResumptionTokenError,\
+              "Unable to decode resumption token (bad cursor): %s" % token
+    # XXX should also validate result contents. Need verb information
+    # for this, and somewhat more flexible verb validation support
     return result, cursor
     
 def oai_dc_writer(element, metadata):
@@ -338,3 +353,11 @@ def nsoaidc(name):
 
 def nsdc(name):
     return '{%s}%s' % (NS_DC, name)
+
+BadArgumentError = common.BadArgumentError
+
+class BadVerbError(Exception):
+    pass
+
+class BadResumptionTokenError(Exception):
+    pass
