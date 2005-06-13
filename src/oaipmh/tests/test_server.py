@@ -170,8 +170,12 @@ class ErrorTestCase(unittest.TestCase):
         self.assertEquals(errors, self.findErrors(xml))
         
     def findErrors(self, xml):
+        # parse
+        tree = etree.parse(StringIO(xml))
+        # validate xml
+        self.assert_(oaischema.validate(tree))
         result = []
-        for e in etree.parse(StringIO(xml)).xpath(
+        for e in tree.xpath(
             '//oai:error', {'oai': NS_OAIPMH}):
             result.append((e.get('code'), e.text))
         result.sort()
