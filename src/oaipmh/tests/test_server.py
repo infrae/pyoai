@@ -178,6 +178,11 @@ class ErrorTestCase(unittest.TestCase):
         self.assertErrors([('badArgument', 'Unknown argument: foo')],
                           xml)
         # need more tests for different variations (required, etc)
+
+    def test_noArgument(self):
+        xml = self._server.handleRequest({})
+        self.assertErrors([('badVerb', 'Required verb argument not found.')],
+                          xml)
         
     def test_badVerb(self):
         xml = self._server.handleRequest({'verb': 'Frotz'})

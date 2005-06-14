@@ -135,7 +135,7 @@ class XMLTreeServer:
             kw)
         return envelope
 
-    def handleException(self, verb, exception):
+    def handleException(self, exception):
         if isinstance(exception, error.ErrorBase):
             envelope = self._outputErrors(
                 [(exception.oainame(), str(exception))])
@@ -241,6 +241,7 @@ class Server(common.ResumptionOAIPMH):
             try:
                 verb = request_kw.pop('verb')
             except KeyError:
+                verb = 'unknown'
                 raise error.BadVerbError,\
                       "Required verb argument not found."
             if verb not in ['GetRecord', 'Identify', 'ListIdentifiers',
@@ -265,16 +266,16 @@ class Server(common.ResumptionOAIPMH):
             return self.handleVerb(verb, request_kw)            
         except:
             # in case of exception, call exception handler
-            return self.handleException(verb, request_kw, sys.exc_info())
+            return self.handleException(request_kw, sys.exc_info())
         
     def handleVerb(self, verb, kw):
         method = common.getMethodForVerb(self._tree_server, verb)
         return etree.tostring(method(**kw).getroot())    
 
-    def handleException(self, verb, kw, exc_info):
+    def handleException(self, kw, exc_info):
         type, value, traceback = exc_info
         return etree.tostring(
-            self._tree_server.handleException(verb, value).getroot())
+            self._tree_server.handleException(value).getroot())
     
 class Resumption(common.ResumptionOAIPMH):
     """There are two interfaces:
