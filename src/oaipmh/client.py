@@ -232,7 +232,10 @@ class BaseClient(common.OAIPMH):
             # XXX setDescription nodes
             sets.append((setSpec, setName, None))
         return sets, token
-
+        
+    def makeRequest(self, **kw):
+        raise NotImplementedError
+    
 class Client(BaseClient):
     def __init__(self, base_url, metadata_registry=None):
         BaseClient.__init__(self, metadata_registry)
