@@ -58,7 +58,7 @@ class XMLTreeServerTestCase(unittest.TestCase):
         tree = self._server.listSets()
         self.assert_(oaischema.validate(tree))
         
-class XMLServerTestCase(unittest.TestCase):
+class ServerTestCase(unittest.TestCase):
     """
     Most of the tests are in the XMLTreeServerTestCase,
     but to test integration with XML directly (argument passing and such),
@@ -66,15 +66,15 @@ class XMLServerTestCase(unittest.TestCase):
     """
     
     def setUp(self):
-        self._server = self.getXMLServer()
+        self._server = self.getServer()
         
-    def getXMLServer(self):
+    def getServer(self):
         directory = os.path.dirname(__file__)
         fake1 = os.path.join(directory, 'fake1')
         myserver = fakeclient.FakeClient(fake1)
         metadata_registry = metadata.MetadataRegistry()
         metadata_registry.registerWriter('oai_dc', server.oai_dc_writer)
-        return server.XMLServer(myserver, metadata_registry)
+        return server.Server(myserver, metadata_registry)
 
     def test_identify(self):
         xml = self._server.identify()
@@ -129,8 +129,8 @@ class ClientServerTestCase(unittest.TestCase):
         metadata_registry = metadata.MetadataRegistry()
         metadata_registry.registerWriter('oai_dc', server.oai_dc_writer)
         metadata_registry.registerReader('oai_dc', metadata.oai_dc_reader)
-        self._server = server.XMLServer(self._fakeserver, metadata_registry,
-                                        resumption_batch_size=7)
+        self._server = server.Server(self._fakeserver, metadata_registry,
+                                     resumption_batch_size=7)
         self._client = ServerClient(self._server, metadata_registry)
 
     def test_listIdentifiers(self):
@@ -153,8 +153,8 @@ class ErrorTestCase(unittest.TestCase):
         metadata_registry = metadata.MetadataRegistry()
         metadata_registry.registerWriter('oai_dc', server.oai_dc_writer)
         metadata_registry.registerReader('oai_dc', metadata.oai_dc_reader)
-        self._server = server.XMLServer(self._fakeserver, metadata_registry,
-                                        resumption_batch_size=7)
+        self._server = server.Server(self._fakeserver, metadata_registry,
+                                     resumption_batch_size=7)
 
     def test_badArgument(self):
         xml = self._server.handleRequest({'verb': 'Identify',
@@ -203,7 +203,7 @@ class ErrorTestCase(unittest.TestCase):
 def test_suite():
     return unittest.TestSuite([
         unittest.makeSuite(XMLTreeServerTestCase),
-        unittest.makeSuite(XMLServerTestCase),
+        unittest.makeSuite(ServerTestCase),
         unittest.makeSuite(ResumptionTestCase),
         unittest.makeSuite(ClientServerTestCase),
         unittest.makeSuite(ErrorTestCase)])

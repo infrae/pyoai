@@ -209,7 +209,7 @@ class XMLTreeServer:
         self._metadata_registry.writeMetadata(
             metadata_prefix, e_metadata, metadata)
 
-class XMLServer(common.ResumptionOAIPMH):
+class Server(common.ResumptionOAIPMH):
     """A server that responds to messages by returning OAI-PMH compliant XML.
 
     Takes a server object complying with the OAIPMH interface.
