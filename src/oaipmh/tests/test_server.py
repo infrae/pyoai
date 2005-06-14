@@ -183,7 +183,13 @@ class ErrorTestCase(unittest.TestCase):
             xml)
 
     def test_idDoesNotExist(self):
-        pass
+        xml = self._server.handleRequest({'verb': 'GetRecord',
+                                          'metadataPrefix': 'oai_dc',
+                                          'identifier': '500'})
+        self.assertErrors(
+            [('idDoesNotExist',
+              'Id does not exist: 500')],
+            xml)
     
     def assertErrors(self, errors, xml):
         self.assertEquals(errors, self.findErrors(xml))

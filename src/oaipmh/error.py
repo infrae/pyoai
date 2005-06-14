@@ -20,14 +20,14 @@ class BadResumptionTokenError(ErrorBase):
 class CannotDisseminateFormatError(ErrorBase):
     pass
 
-class IdDoesNotExist(ErrorBase):
+class IdDoesNotExistError(ErrorBase):
     pass
 
-class NoRecordsMatch(ErrorBase):
+class NoRecordsMatchError(ErrorBase):
     pass
 
-class NoMetadataFormats(ErrorBase):
+class NoMetadataFormatsError(ErrorBase):
     pass
 
-class NoSetHierarchy(ErrorBase):
+class NoSetHierarchyError(ErrorBase):
     pass

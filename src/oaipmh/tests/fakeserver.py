@@ -1,4 +1,4 @@
-from oaipmh import common
+from oaipmh import common, error
 from datetime import datetime
 
 class FakeServer:
@@ -30,3 +30,8 @@ class FakeServer:
                     set=None):
         return self._data
     
+    def getRecord(self, metadataPrefix, identifier):
+        try:
+            return self._data[int(identifier)]
+        except IndexError:
+            raise error.IdDoesNotExistError, "Id does not exist: %s" % identifier
