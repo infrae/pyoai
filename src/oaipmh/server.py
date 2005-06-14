@@ -235,9 +235,16 @@ class Server(common.ResumptionOAIPMH):
         request_kw is a dictionary containing request parameters, including
         verb.
         """
-        request_kw = request_kw.copy()
         # try to get verb, if not, we have an argument handling error
         try:
+            new_kw = {}
+            try:
+                for key, value in request_kw.items():
+                    new_kw[str(key)] = value
+            except UnicodeError:
+                raise error.BadVerbError,\
+                      "Non-ascii keys in request."
+            request_kw = new_kw
             try:
                 verb = request_kw.pop('verb')
             except KeyError:
