@@ -71,6 +71,8 @@ class Identify:
 def datetime_to_datestamp(dt):
     # ignore microsends
     dt = dt.replace(microsecond=0)
+    if dt.hour == 0 and dt.minute == 0 and dt.second == 0:
+        return '%04d-%02d-%02d' % (dt.year, dt.month, dt.day)
     return dt.isoformat() + 'Z'
     
 def datestamp_to_datetime(datestamp):
@@ -98,9 +100,6 @@ class OAIMethodImpl(object):
         self._verb = verb
         
     def __call__(self, bound_self, **kw):
-        if kw.has_key('from_'):
-            kw['from'] = kw['from_']
-            del kw['from_']
         return bound_self.handleVerb(self._verb, kw)
         
 def OAIMethod(verb):

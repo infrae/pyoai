@@ -27,7 +27,8 @@ print "compression:", identify.compression()
 print
 
 print "ListIdentifiers"
-headers = client.listIdentifiers(from_="2003-04-10", metadataPrefix='oai_dc')
+headers = client.listIdentifiers(from_=datetime(2003, 04, 10),
+                                 metadataPrefix='oai_dc')
 for header in headers:
     print "identifier:", header.identifier()
     print "datestamp:", header.datestamp()
@@ -44,7 +45,7 @@ print
 
 print "ListRecords"
 for header, metadata, about in client.listRecords(
-    from_="2003-04-10", metadataPrefix='oai_dc'):
+    from_=datetime(2003, 04, 10), metadataPrefix='oai_dc'):
     print "header"
     print "identifier:", header.identifier()
     print "datestamp:", header.datestamp()

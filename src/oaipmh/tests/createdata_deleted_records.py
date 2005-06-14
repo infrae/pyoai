@@ -27,7 +27,8 @@ print
 
 print "ListRecords"
 for header, metadata, about in server.listRecords(
-    from_="2004-01-01", until="2004-02-01" metadataPrefix='oai_dc'):
+    from_=datetime(2004, 01, 01), until=datetime(2004, 02, 01),
+    metadataPrefix='oai_dc'):
     print "header"
     print "identifier:", header.identifier()
     print "datestamp:", header.datestamp()

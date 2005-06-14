@@ -38,7 +38,7 @@ class ValidationSpec:
         }
 
     ListIdentifiers = {
-        'from':'optional',
+        'from_':'optional',
         'until':'optional',
         'metadataPrefix':'required',
         'set':'optional',
@@ -49,7 +49,7 @@ class ValidationSpec:
         }
 
     ListRecords = {
-        'from':'optional',
+        'from_':'optional',
         'until':'optional',
         'set':'optional',
         'metadataPrefix':'required',
@@ -61,7 +61,7 @@ class ValidationSpec:
 class ResumptionValidationSpec(ValidationSpec):
 
     ListIdentifiers = {
-        'from':'optional',
+        'from_':'optional',
         'until':'optional',
         'metadataPrefix':'required',
         'set':'optional',
@@ -69,7 +69,7 @@ class ResumptionValidationSpec(ValidationSpec):
         }
     
     ListRecords = {
-        'from':'optional',
+        'from_':'optional',
         'until':'optional',
         'set':'optional',
         'metadataPrefix':'required',

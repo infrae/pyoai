@@ -1,7 +1,7 @@
 import unittest
 import os
 from StringIO import StringIO
-from oaipmh import server, client, common, metadata
+from oaipmh import server, client, common, metadata, error
 from lxml import etree
 from datetime import datetime
 import fakeclient
@@ -40,7 +40,7 @@ class XMLTreeServerTestCase(unittest.TestCase):
 
     def test_listIdentifiers(self):
         tree = self._server.listIdentifiers(
-            from_="2003-04-10",
+            from_=datetime(2003, 4, 10),
             metadataPrefix='oai_dc')
         self.assert_(oaischema.validate(tree))
         
@@ -50,7 +50,7 @@ class XMLTreeServerTestCase(unittest.TestCase):
 
     def test_listRecords(self):
         tree = self._server.listRecords(
-            from_="2003-04-10",
+            from_=datetime(2003, 4, 10),
             metadataPrefix='oai_dc')
         self.assert_(oaischema.validate(tree))
 
@@ -83,7 +83,7 @@ class ServerTestCase(unittest.TestCase):
         
     def test_listIdentifiers(self):
         xml = self._server.listIdentifiers(
-            from_="2003-04-10",
+            from_=datetime(2003, 04, 10),
             metadataPrefix='oai_dc')
         tree = etree.parse(StringIO(xml))
         self.assert_(oaischema.validate(tree))
@@ -119,9 +119,7 @@ class ServerClient(client.BaseClient):
         self._server = server
         
     def makeRequest(self, **kw):
-        verb = kw.pop('verb')
-        method = common.getMethodForVerb(self._server, verb)
-        return method(**kw)
+        return self._server.handleRequest(kw)
         
 class ClientServerTestCase(unittest.TestCase):
     def setUp(self):
@@ -140,13 +138,31 @@ class ClientServerTestCase(unittest.TestCase):
 
     def test_listRecords(self):
         records = self._client.listRecords(metadataPrefix='oai_dc')
+        records = list(records)
+        self.assertEquals(100, len(records))
         metadatas = [metadata for (header, metadata, about) in records]
         result = []
         for metadata in metadatas:
             result.append(metadata.getField('title')[0])
         expected = ['Title %s' % i for i in range(100)]
         self.assertEquals(expected, result)
+        #for record in records:
+        #    print record[0].datestamp()
 
+    def test_listIdentifiersFromUntil(self):
+        headers = self._client.listIdentifiers(metadataPrefix='oai_dc',
+                                               from_=datetime(2004, 1, 1),
+                                               until=datetime(2004, 7, 1))
+        # we expect 52 items
+        headers = list(headers)
+        self.assertEquals(52, len(headers))
+
+    def test_listIdentifiersFromUntil_nothing(self):
+        self.assertRaises(error.NoRecordsMatchError,
+                          self._client.listIdentifiers,
+                          metadataPrefix='oai_dc', from_=datetime(2003, 1, 1),
+                          until=datetime(2003, 7, 1))
+        
 class ErrorTestCase(unittest.TestCase):
     def setUp(self):
         self._fakeserver = fakeserver.FakeServer()

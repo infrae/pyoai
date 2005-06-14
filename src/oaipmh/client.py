@@ -8,7 +8,7 @@ from types import SliceType
 from lxml import etree
 import time
 
-from oaipmh import common, metadata, validation
+from oaipmh import common, metadata, validation, error
 
 WAIT_DEFAULT = 120 # two minutes
 WAIT_MAX = 5
@@ -26,10 +26,19 @@ class BaseClient(common.OAIPMH):
     def handleVerb(self, verb, kw):
         # validate kw first
         validation.validateArguments(verb, kw)
+        # encode datetimes as datestamps
+        from_ = kw.get('from_')
+        if from_ is not None:
+            # turn it into 'from', not 'from_' before doing actual request
+            kw['from'] = common.datetime_to_datestamp(from_)
+            del kw['from_']
+        until = kw.get('until')
+        if until is not None:
+            kw['until'] = common.datetime_to_datestamp(until)
         # now call underlying implementation
         method_name = verb + '_impl'
         return getattr(self, method_name)(
-            kw, self.makeRequest(verb=verb, **kw))    
+            kw, self.makeRequestErrorHandling(verb=verb, **kw))    
 
     def getNamespaces(self):
         """Get OAI namespaces.
@@ -42,11 +51,6 @@ class BaseClient(common.OAIPMH):
         Do we want to allow the returning of the global registry?
         """
         return self._metadata_registry
-    
-    def makeRequest(self, **kw):
-        """Actually retrieve XML from the server.
-        """
-        raise NotImplementedError
 
     def ignoreBadCharacters(self, true_or_false): 	 
         """Set to ignore bad characters in UTF-8 input. 	 
@@ -70,12 +74,12 @@ class BaseClient(common.OAIPMH):
             xml = unicode(xml, 'UTF-8')
         return etree.XML(xml)
 
-    def GetRecord_impl(self, args, xml):
+    def GetRecord_impl(self, args, tree):
         records, token = self.buildRecords(
             args['metadataPrefix'],
             self.getNamespaces(),
             self._metadata_registry,
-            xml
+            tree
             )
         assert token is None
         return records[0]
@@ -83,8 +87,7 @@ class BaseClient(common.OAIPMH):
     # implementation of the various methods, delegated here by
     # handleVerb method
     
-    def Identify_impl(self, args, xml):
-        tree = self.parse(xml)
+    def Identify_impl(self, args, tree):
         namespaces = self.getNamespaces()
         evaluator = etree.XPathEvaluator(tree, namespaces)
         identify_node = evaluator.evaluate(
@@ -108,18 +111,17 @@ class BaseClient(common.OAIPMH):
             deletedRecord, granularity, compression)
         return identify
 
-    def ListIdentifiers_impl(self, args, xml):
+    def ListIdentifiers_impl(self, args, tree):
         namespaces = self.getNamespaces()
         def firstBatch():
-            return self.buildIdentifiers(namespaces, xml)
+            return self.buildIdentifiers(namespaces, tree)
         def nextBatch(token):
-            xml = self.makeRequest(verb='ListIdentifiers',
-                                   resumptionToken=token)
-            return self.buildIdentifiers(namespaces, xml)
+            tree = self.makeRequestErrorHandling(verb='ListIdentifiers',
+                                                 resumptionToken=token)
+            return self.buildIdentifiers(namespaces, tree)
         return ResumptionListGenerator(firstBatch, nextBatch)
 
-    def ListMetadataFormats_impl(self, args, xml):
-        tree = self.parse(xml)
+    def ListMetadataFormats_impl(self, args, tree):
         namespaces = self.getNamespaces()
         evaluator = etree.XPathEvaluator(tree, namespaces)
 
@@ -136,39 +138,38 @@ class BaseClient(common.OAIPMH):
 
         return metadataFormats
 
-    def ListRecords_impl(self, args, xml):
+    def ListRecords_impl(self, args, tree):
         namespaces = self.getNamespaces()
         metadata_prefix = args['metadataPrefix']
         metadata_registry = self._metadata_registry
         def firstBatch():
             return self.buildRecords(
                 metadata_prefix, namespaces,
-                metadata_registry, xml)
+                metadata_registry, tree)
         def nextBatch(token):
-            xml = self.makeRequest(
+            tree = self.makeRequestErrorHandling(
                 verb='ListRecords',
                 resumptionToken=token)
             return self.buildRecords(
                 metadata_prefix, namespaces,
-                metadata_registry, xml)
+                metadata_registry, tree)
         return ResumptionListGenerator(firstBatch, nextBatch)
 
-    def ListSets_impl(self, args, xml):
+    def ListSets_impl(self, args, tree):
         namespaces = self.getNamespaces()
         def firstBatch():
-            return self.buildSets(namespaces, xml)
+            return self.buildSets(namespaces, tree)
         def nextBatch(token):
-            xml = self.makeRequest(
+            tree = self.makeRequestErrorHandling(
                 verb='ListSets',
                 resumptionToken=token)
-            return self.buildSets(namespaces, xml)
+            return self.buildSets(namespaces, tree)
         return ResumptionListGenerator(firstBatch, nextBatch)
 
     # various helper methods
     
     def buildRecords(self,
-                     metadata_prefix, namespaces, metadata_registry, xml):
-        tree = self.parse(xml)
+                     metadata_prefix, namespaces, metadata_registry, tree):
         # first find resumption token if available
         evaluator = etree.XPathEvaluator(tree, namespaces)
         token = evaluator.evaluate(
@@ -198,8 +199,7 @@ class BaseClient(common.OAIPMH):
             result.append((header, metadata, None))
         return result, token
 
-    def buildIdentifiers(self, namespaces, xml):
-        tree = self.parse(xml)
+    def buildIdentifiers(self, namespaces, tree):
         evaluator = etree.XPathEvaluator(tree, namespaces)
         # first find resumption token is available
         token = evaluator.evaluate(
@@ -214,8 +214,7 @@ class BaseClient(common.OAIPMH):
             result.append(header)
         return result, token
 
-    def buildSets(self, namespaces, xml):
-        tree = self.parse(xml)
+    def buildSets(self, namespaces, tree):
         evaluator = etree.XPathEvaluator(tree, namespaces)
         # first find resumption token if available
         token = evaluator.evaluate(
@@ -232,7 +231,30 @@ class BaseClient(common.OAIPMH):
             # XXX setDescription nodes
             sets.append((setSpec, setName, None))
         return sets, token
-        
+
+    def makeRequestErrorHandling(self, **kw):
+        xml = self.makeRequest(**kw)
+        tree = self.parse(xml)
+        # check whether there are errors first
+        e_errors = tree.xpath('/oai:OAI-PMH/oai:error',
+                              namespaces=self.getNamespaces())
+        if e_errors:
+            # XXX right now only raise first error found, does not
+            # collect error info
+            for e_error in e_errors:
+                code = e_error.get('code')
+                msg = e_error.text
+                if code not in ['badArgument', 'badResumptionToken',
+                                'badVerb', 'cannotDisseminateFormat',
+                                'idDoesNotExist', 'noRecordsMatch',
+                                'noMetadataFormats', 'noSetHierarchy']:
+                    raise error.UnknownError,\
+                          "Unknown error code from server: %s, message: %s" % (
+                        code, msg)
+                # find exception in error module and raise with msg
+                raise getattr(error, code[0].upper() + code[1:] + 'Error'), msg
+        return tree
+    
     def makeRequest(self, **kw):
         raise NotImplementedError
     

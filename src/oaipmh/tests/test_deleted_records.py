@@ -2,6 +2,7 @@ from unittest import TestCase, TestSuite, main, makeSuite
 from fakeclient import FakeClient
 import os
 from oaipmh import metadata
+from datetime import datetime
 
 directory = os.path.dirname(__file__)
 fake2 = os.path.join(directory, 'fake2')
@@ -24,7 +25,7 @@ class DeletedRecordsTestCase(TestCase):
         self.assert_(not header.isDeleted())
 
     def test_listRecords(self):
-        records = fakeclient.listRecords(from_="2004-01-01",
+        records = fakeclient.listRecords(from_=datetime(2004, 01, 01),
                                          metadataPrefix='oai_dc')
         # lazy, just test first one
         for header, metadata, about in records:

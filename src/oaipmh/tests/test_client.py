@@ -49,7 +49,7 @@ class ClientTestCase(TestCase):
             identify.compression())
 
     def test_listIdentifiers(self):
-        headers = fakeclient.listIdentifiers(from_="2003-04-10",
+        headers = fakeclient.listIdentifiers(from_=datetime(2003, 04, 10),
                                              metadataPrefix='oai_dc')
         # lazy, just test first one
         headers = list(headers)
@@ -74,7 +74,7 @@ class ClientTestCase(TestCase):
             foo='bar')
         
     def test_listRecords(self):
-        records = fakeclient.listRecords(from_="2003-04-10",
+        records = fakeclient.listRecords(from_=datetime(2003, 04, 10),
                                          metadataPrefix='oai_dc')
         records = list(records)
         # lazy, just test first one

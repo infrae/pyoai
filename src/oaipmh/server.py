@@ -157,6 +157,8 @@ class XMLTreeServer:
         for key, value in kw.items():
             if key == 'from_':
                 key = 'from'
+            if key == 'from' or key == 'until':
+                value = common.datetime_to_datestamp(value)
             e_request.set(key, value)
         # XXX this is potentially slow..
         e_request.text = self._server.identify().baseURL()
@@ -184,6 +186,14 @@ class XMLTreeServer:
             token_kw, dummy = decodeResumptionToken(resumptionToken)
         else:
             result, token = input_func(**kw)
+            # if we don't get results for the first request,
+            # then no records match
+            # XXX this will also be triggered if there are no sets,
+            # but input_func (listSets) should have already raised
+            # NoSetHierarchyError in that case
+            if not result:
+                raise error.NoRecordsMatchError,\
+                      "No records match for request."
             # without resumption token keys are fine
             token_kw = kw
         output_func(element, result, token_kw)
@@ -225,6 +235,7 @@ class Server(common.ResumptionOAIPMH):
         request_kw is a dictionary containing request parameters, including
         verb.
         """
+        request_kw = request_kw.copy()
         # try to get verb, if not, we have an argument handling error
         try:
             try:
@@ -235,13 +246,23 @@ class Server(common.ResumptionOAIPMH):
             if verb not in ['GetRecord', 'Identify', 'ListIdentifiers',
                             'ListMetadataFormats', 'ListRecords', 'ListSets']:
                 raise error.BadVerbError, "Illegal verb: %s" % verb
+            # replace from and until arguments if necessary
+            from_ = request_kw.get('from')
+            if from_ is not None:
+                # rename to from_ for internal use
+                request_kw['from_'] = common.datestamp_to_datetime(from_)
+                del request_kw['from']
+            until = request_kw.get('until')
+            if until is not None:
+                request_kw['until'] = common.datestamp_to_datetime(until)
+            # now validate parameters
             try:
                 validation.validateResumptionArguments(verb, request_kw)
             except validation.BadArgumentError, e:
                 # have to raise this as a error.BadArgumentError
                 raise error.BadArgumentError, str(e)
             # now handle verb
-            self.handleVerb(verb, request_kw)            
+            return self.handleVerb(verb, request_kw)            
         except:
             # in case of exception, call exception handler
             return self.handleException(verb, request_kw, sys.exc_info())
@@ -309,6 +330,12 @@ class Resumption(common.ResumptionOAIPMH):
 def encodeResumptionToken(kw, cursor):
     kw = kw.copy()
     kw['cursor'] = str(cursor)
+    from_ = kw.get('from_')
+    if from_ is not None:
+        kw['from_'] = common.datetime_to_datestamp(from_)
+    until = kw.get('until')
+    if until is not None:
+        kw['until'] = common.datetime_to_datestamp(until)
     return urlencode(kw)
 
 def decodeResumptionToken(token):
@@ -319,7 +346,10 @@ def decodeResumptionToken(token):
               "Unable to decode resumption token: %s" % token
     result = {}
     for key, value in kw.items():
-        result[key] = value[0]
+        value = value[0]
+        if key == 'from_' or key == 'until':
+            value = common.datestamp_to_datetime(value)
+        result[key] = value
     try:
         cursor = int(result.pop('cursor'))
     except (KeyError, ValueError):

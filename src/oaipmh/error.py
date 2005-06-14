@@ -31,3 +31,6 @@ class NoMetadataFormatsError(ErrorBase):
 
 class NoSetHierarchyError(ErrorBase):
     pass
+
+class UnknownError(ErrorBase):
+    pass
