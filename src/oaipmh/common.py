@@ -31,7 +31,7 @@ class Metadata:
 
     __getitem__ = getField
     
-class ServerIdentify:
+class Identify:
     def __init__(self, repositoryName, baseURL, protocolVersion, adminEmails,
                  earliestDatestamp, deletedRecord, granularity, compression):
         self._repositoryName = repositoryName

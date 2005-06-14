@@ -102,7 +102,7 @@ class BaseClient(common.OAIPMH):
         granularity = e('string(oai:granularity/text())')
         compression = e('oai:compression/text()')
         # XXX description
-        identify = common.ServerIdentify(
+        identify = common.Identify(
             repositoryName, baseURL, protocolVersion,
             adminEmails, earliestDatestamp,
             deletedRecord, granularity, compression)

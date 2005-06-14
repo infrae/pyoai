@@ -11,7 +11,7 @@ class FakeServer:
         self._data = data
 
     def identify(self):
-        return common.ServerIdentify(
+        return common.Identify(
             repositoryName='Fake',
             baseURL='http://www.infrae.com/oai/',
             protocolVersion="2.0",
@@ -35,3 +35,4 @@ class FakeServer:
             return self._data[int(identifier)]
         except IndexError:
             raise error.IdDoesNotExistError, "Id does not exist: %s" % identifier
+    
