@@ -11,6 +11,9 @@ just a method call from the Python perspective. The XML data that is
 returned from the server is processed as well, and returned as Python
 objects.
 
+Note: This document is out of date and only describes the client
+support.
+
 API
 ===
 
