@@ -68,10 +68,15 @@ class Identify:
     def compression(self):
         return self._compression
 
+def date_to_datestamp(d):
+    return datetime_to_datestamp(
+        datetime.datetime.combine(d, datetime.time(0)))
+    
 def datetime_to_datestamp(dt):
-    # ignore microsends
+    # ignore microseconds
     dt = dt.replace(microsecond=0)
     if dt.hour == 0 and dt.minute == 0 and dt.second == 0:
+        # XXX why remove timing info?
         return '%04d-%02d-%02d' % (dt.year, dt.month, dt.day)
     return dt.isoformat() + 'Z'
     
