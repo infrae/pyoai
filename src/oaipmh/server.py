@@ -347,6 +347,7 @@ def encodeResumptionToken(kw, cursor):
     return urlencode(kw)
 
 def decodeResumptionToken(token):
+    token = str(token)
     try:
         kw = cgi.parse_qs(token, True, True)
     except ValueError:
