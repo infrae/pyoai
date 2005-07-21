@@ -318,3 +318,10 @@ def retrieveFromUrlWaiting(request,
         raise Error, "Waited too often (more than %s times)" % wait_max
     return text
 
+class ServerClient(BaseClient):
+    def __init__(self, server, metadata_registry=None):
+        BaseClient.__init__(self, metadata_registry)
+        self._server = server
+        
+    def makeRequest(self, **kw):
+        return self._server.handleRequest(kw)

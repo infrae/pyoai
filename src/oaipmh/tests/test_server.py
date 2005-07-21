@@ -112,14 +112,6 @@ class ResumptionTestCase(unittest.TestCase):
         # we should find a resumptionToken element with text
         self.assert_(
             tree.xpath('//oai:resumptionToken/text()', {'oai': NS_OAIPMH} ))
-
-class ServerClient(client.BaseClient):
-    def __init__(self, server, metadata_registry=None):
-        client.BaseClient.__init__(self, metadata_registry)
-        self._server = server
-        
-    def makeRequest(self, **kw):
-        return self._server.handleRequest(kw)
         
 class ClientServerTestCase(unittest.TestCase):
     def setUp(self):
@@ -129,7 +121,7 @@ class ClientServerTestCase(unittest.TestCase):
         metadata_registry.registerReader('oai_dc', metadata.oai_dc_reader)
         self._server = server.Server(self._fakeserver, metadata_registry,
                                      resumption_batch_size=7)
-        self._client = ServerClient(self._server, metadata_registry)
+        self._client = client.ServerClient(self._server, metadata_registry)
 
     def test_listIdentifiers(self):
         headers = self._client.listIdentifiers(metadataPrefix='oai_dc')
