@@ -4,9 +4,9 @@ verb=Identify
 00001.xml
 verb=ListMetadataFormats
 00002.xml
-from=2003-04-10&metadataPrefix=oai_dc&verb=ListIdentifiers
+from=2003-04-10T00%3A00%3A00Z&metadataPrefix=oai_dc&verb=ListIdentifiers
 00003.xml
 identifier=hdl%3A1765%2F315&metadataPrefix=oai_dc&verb=GetRecord
 00004.xml
-from=2003-04-10&metadataPrefix=oai_dc&verb=ListRecords
+from=2003-04-10T00%3A00%3A00Z&metadataPrefix=oai_dc&verb=ListRecords
 00005.xml
