@@ -38,7 +38,8 @@ class XMLTreeServer:
         header, metadata, about = self._server.getRecord(**kw)
         e_record = SubElement(e_getRecord, nsoai('record'))
         self._outputHeader(e_record, header)   
-        self._outputMetadata(e_record, kw['metadataPrefix'], metadata)
+        if not header.isDeleted():
+            self._outputMetadata(e_record, kw['metadataPrefix'], metadata)
         return envelope
     
     def identify(self):
@@ -107,8 +108,9 @@ class XMLTreeServer:
             metadataPrefix = token_kw['metadataPrefix']
             for header, metadata, about in records:
                 e_record = SubElement(e_listRecords, nsoai('record'))
-                self._outputHeader(e_record, header)   
-                self._outputMetadata(e_record, metadataPrefix, metadata)
+                self._outputHeader(e_record, header)
+                if not header.isDeleted():
+                    self._outputMetadata(e_record, metadataPrefix, metadata)
                 # XXX about
         self._outputResuming(
             e_listRecords,
@@ -203,6 +205,8 @@ class XMLTreeServer:
             
     def _outputHeader(self, element, header):
         e_header = SubElement(element, nsoai('header'))
+        if header.isDeleted():
+            e_header.set('status', 'deleted')
         e_identifier = SubElement(e_header, nsoai('identifier'))
         e_identifier.text = header.identifier()
         e_datestamp = SubElement(e_header, nsoai('datestamp'))
@@ -210,7 +214,7 @@ class XMLTreeServer:
         for set in header.setSpec():
             e = SubElement(e_header, nsoai('setSpec'))
             e.text = set
-        
+    
     def _outputMetadata(self, element, metadata_prefix, metadata):
         e_metadata = SubElement(element, nsoai('metadata'))
         if not self._metadata_registry.hasWriter(metadata_prefix):

@@ -2,24 +2,7 @@ from oaipmh import common, error
 from datetime import datetime
 import random
 
-class FakeServer:
-    def __init__(self):
-        data = []
-        
-        for i in range(100):
-            # create some datestamp spread
-            year = 2004
-            month = i % 12 + 1
-            day = i % 28 + 1
-            hour = i % 24
-            minute = i % 60
-            second = i % 60
-            datestamp = datetime(year, month, day, hour, minute, second)
-            data.append((common.Header(str(i), datestamp, '', False),
-                         common.Metadata({'title': ['Title %s' % i]}),
-                         None))
-        self._data = data
-
+class FakeServerBase:
     def identify(self):
         return common.Identify(
             repositoryName='Fake',
@@ -52,7 +35,7 @@ class FakeServer:
             return self._data[int(identifier)]
         except IndexError:
             raise error.IdDoesNotExistError, "Id does not exist: %s" % identifier
-    
+
 
 def datestampInRange(header, from_, until):
     if from_ is not None and header.datestamp() < from_:
@@ -60,3 +43,52 @@ def datestampInRange(header, from_, until):
     if until is not None and header.datestamp() > until:
         return False
     return True
+
+class FakeServer(FakeServerBase):
+    def __init__(self):
+        data = []
+        
+        for i in range(100):
+            # create some datestamp spread
+            year = 2004
+            month = i % 12 + 1
+            day = i % 28 + 1
+            hour = i % 24
+            minute = i % 60
+            second = i % 60
+            datestamp = datetime(year, month, day, hour, minute, second)
+            data.append((common.Header(str(i), datestamp, '', False),
+                         common.Metadata({'title': ['Title %s' % i]}),
+                         None))
+        self._data = data
+
+class FakeServerWithDeletions(FakeServerBase):
+
+    def __init__(self):
+        data = []
+
+        for i in range(0, 12):
+            # create some records in a year
+            year = 2005
+            month = i + 1
+            day = 1
+            datestamp = datetime(year, month, day, 12, 30, 0)
+            data.append((common.Header(str(i), datestamp, '', False),
+                         common.Metadata({'title': ['Title %s' % i]}),
+                         None))
+        self._data = data
+        
+    def deletionEvent(self):
+        # delete half the records we store
+        data = []
+        # create deletion remains for these records
+        for i in range(0, 6):
+            year = 2006
+            month = i + 1
+            day = 1
+            datestamp = datetime(year, month, day, 12, 35, 0)
+            data.append((common.Header(str(i), datestamp, '', True),
+                         None,
+                         None))
+        # replace first half with deleted records
+        self._data = data + self._data[6:]

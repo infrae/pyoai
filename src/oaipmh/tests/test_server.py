@@ -218,14 +218,66 @@ class ErrorTestCase(unittest.TestCase):
             result.append((e.get('code'), e.text))
         result.sort()
         return result
-    
+
+class DeletionTestCase(unittest.TestCase):
+    def setUp(self):
+        self._fakeserver = fakeserver.FakeServerWithDeletions()
+        metadata_registry = metadata.MetadataRegistry()
+        metadata_registry.registerWriter('oai_dc', server.oai_dc_writer)
+        metadata_registry.registerReader('oai_dc', metadata.oai_dc_reader)
+        self._server = server.Server(self._fakeserver, metadata_registry,
+                                     resumption_batch_size=7)
+        self._client = client.ServerClient(self._server, metadata_registry)
+
+    def test_listIdentifiers(self):
+        headers = self._client.listIdentifiers(metadataPrefix='oai_dc')
+        # we expect 12 items
+        headers = list(headers)
+        self.assertEquals(12, len(headers))
+        # now delete
+        self._fakeserver.deletionEvent()
+        # check again, we expect 12 items, but half of which is deleted
+        headers = self._client.listIdentifiers(metadataPrefix='oai_dc')
+        headers = list(headers)
+        self.assertEquals(12, len(headers))
+        deleted_count = 0
+        for header in headers:
+            if header.isDeleted():
+                deleted_count += 1
+        self.assertEquals(6, deleted_count)
+
+    def test_listRecords(self):
+        self._fakeserver.deletionEvent()
+        # we expect 12 items, but half of which is deleted
+        records = self._client.listRecords(metadataPrefix='oai_dc')
+        records = list(records)
+        self.assertEquals(12, len(records))
+        deleted_count = 0
+        for header, metadata, about in records:
+            if header.isDeleted():
+                deleted_count += 1
+                self.assertEquals(None, metadata)
+        self.assertEquals(6, deleted_count)
+
+    def test_getRecord(self):
+        self._fakeserver.deletionEvent()
+        header, metadata, about = self._fakeserver.getRecord(
+            metadataPrefix='oai_dc',
+            identifier='1')
+        # we try to access a deleted record
+        header, metadata, about = self._client.getRecord(
+            metadataPrefix='oai_dc', identifier='1')
+        self.assert_(header.isDeleted())
+        self.assertEquals(None, metadata)
+            
 def test_suite():
     return unittest.TestSuite([
         unittest.makeSuite(XMLTreeServerTestCase),
         unittest.makeSuite(ServerTestCase),
         unittest.makeSuite(ResumptionTestCase),
         unittest.makeSuite(ClientServerTestCase),
-        unittest.makeSuite(ErrorTestCase)])
+        unittest.makeSuite(ErrorTestCase),
+        unittest.makeSuite(DeletionTestCase)])
 
 if __name__=='__main__':
     main(defaultTest='test_suite')
