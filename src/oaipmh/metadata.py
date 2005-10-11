@@ -46,6 +46,9 @@ class MetadataRegistry:
 
 global_metadata_registry = MetadataRegistry()
 
+class Error(Exception):
+    pass
+
 class MetadataReader:
     """A default implementation of a reader based on fields.
     """
