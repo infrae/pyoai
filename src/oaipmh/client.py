@@ -2,6 +2,7 @@
 # Released under the BSD license (see LICENSE.txt)
 from __future__ import nested_scopes
 import urllib2
+import base64
 from urllib import urlencode
 from StringIO import StringIO
 from types import SliceType
@@ -259,17 +260,24 @@ class BaseClient(common.OAIPMH):
         raise NotImplementedError
     
 class Client(BaseClient):
-    def __init__(self, base_url, metadata_registry=None):
+    def __init__(
+            self, base_url, metadata_registry=None, credentials=None):
         BaseClient.__init__(self, metadata_registry)
         self._base_url = base_url
-        
+        if credentials is not None:
+            self._credentials = base64.encodestring('%s:%s' % credentials)
+        else:
+            self._credentials = None
+            
     def makeRequest(self, **kw):
         """Actually retrieve XML from the server.
         """
         # XXX include From header?
-        headers = {'User-Agent': 'pyoai',
-                   }
-        request = urllib2.Request(self._base_url, urlencode(kw), headers)
+        headers = {'User-Agent': 'pyoai'}
+        if self._credentials is not None:
+            headers['Authorization'] = 'Basic ' + self._credentials.strip()
+        request = urllib2.Request(
+            self._base_url, data=urlencode(kw), headers=headers)
         return retrieveFromUrlWaiting(request)
 
 def buildHeader(header_node, namespaces):
