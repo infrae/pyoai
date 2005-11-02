@@ -73,6 +73,7 @@ def date_to_datestamp(d):
         datetime.datetime.combine(d, datetime.time(0)))
     
 def datetime_to_datestamp(dt):
+    assert dt.tzinfo is None # only accept timezone naive datetimes
     # ignore microseconds
     dt = dt.replace(microsecond=0)
     return dt.isoformat() + 'Z'
@@ -87,10 +88,9 @@ def datestamp_to_datetime(datestamp):
         d = splitted[0]
         t = '00:00:00'
     YYYY, MM, DD = d.split('-')
-    hh, mm, ss = t.split(':')
+    hh, mm, ss = t.split(':') # this assumes there's no timezone info
     return datetime.datetime(
-        int(YYYY), int(MM), int(DD),
-        int(hh), int(mm), int(ss))
+        int(YYYY), int(MM), int(DD), int(hh), int(mm), int(ss))
     
 def ResumptionTokenSpec(dict):
     dict = dict.copy()
