@@ -2,16 +2,23 @@
 oaipmh changelog
 ================
 
-under development
-=================
+2.0b1
+=====
 
 Changes
 -------
 
-* switch over from using libxml2 Python wrappers to the lxml binding.
+* Added framework for implementing OAI-PMH compliant servers.
 
-* introduced oaipmh namespace package, and move client functionality
-  into oaipmh.client.
+* Changed package structure: now a oaipmh namespace package. Client
+  functionality now in oaipmh.client.
+
+* Refactoring of oaipmh.py module to reuse code for both client and
+  server.
+
+* Extended testing infrastructure.
+
+* Switched over from using libxml2 Python wrappers to the lxml binding.
 
 * Use generators instead of hacked up __getitem__. This means that the
   return from listRecords, listIdentifiers and listSets are now not

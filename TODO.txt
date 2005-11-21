@@ -1,8 +1,6 @@
 TODO
 ====
 
-* Handle error codes
-
 * Handle 'description' field in various places
 
 * compression support?

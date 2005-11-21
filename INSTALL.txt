@@ -18,8 +18,8 @@ libxml2/libxslt. You can find lxml here:
 
 http://codespeak.net/lxml
 
-lxml needs libxml2 and libxslt (though not their Python
-bindings). libxml2 can can be found here:
+lxml needs libxml2 and libxslt (though not their Python bindings;
+installing those is optional). libxml2 can can be found here:
 
 http://xmlsoft.org/
 
