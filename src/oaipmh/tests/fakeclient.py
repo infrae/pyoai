@@ -14,6 +14,20 @@ class FakeClient(client.BaseClient):
         # sort it to get stable behavior
         return self._mapping[getRequestKey(kw)]
 
+class TestError(Exception):
+    def __init__(self, kw):
+        self.kw = kw
+        
+class GranularityFakeClient(client.BaseClient):
+    def __init__(self, day_granularity):
+        client.BaseClient.__init__(self, day_granularity=day_granularity)
+
+    def makeRequest(self, **kw):
+        # even more fake, we'll simply raise an exception with the request
+        # this can be caught by the test to see whether the request uses
+        # day granularity..
+        raise TestError(kw)
+    
 def getRequestKey(kw):
     """Create stable key for request dictionary to use in file.
     """

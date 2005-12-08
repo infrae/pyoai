@@ -1,5 +1,5 @@
 from unittest import TestCase, TestSuite, main, makeSuite
-from fakeclient import FakeClient
+from fakeclient import FakeClient, GranularityFakeClient, TestError
 import os
 from datetime import datetime
 from oaipmh import common, metadata, validation
@@ -120,6 +120,22 @@ class ClientTestCase(TestCase):
             expected,
             compare)
 
+    def test_day_granularity(self):
+        fakeclient = GranularityFakeClient(day_granularity=False)
+        try:
+            fakeclient.listRecords(from_=datetime(2003, 04, 10, 14, 0),
+                                   metadataPrefix='oai_dc')
+        except TestError, e:
+            self.assertEquals('2003-04-10T14:00:00Z', e.kw['from'])
+        fakeclient = GranularityFakeClient(day_granularity=True)
+        try:
+            fakeclient.listRecords(from_=datetime(2003, 04, 10, 14, 0),
+                                   until=datetime(2004, 06, 17, 15, 30),
+                                   metadataPrefix='oai_dc')
+        except TestError, e:
+            self.assertEquals('2003-04-10', e.kw['from'])
+            self.assertEquals('2004-06-17', e.kw['until'])
+            
 def test_suite():
     return TestSuite((makeSuite(ClientTestCase), ))
 

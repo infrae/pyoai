@@ -2,6 +2,16 @@
 oaipmh changelog
 ================
 
+under development
+=================
+
+Changes
+-------
+
+* Add support for setting day-level granularity on client. The client
+  will then only make requests with from and until in the granularity
+  of a day.
+
 2.0b1
 =====
 

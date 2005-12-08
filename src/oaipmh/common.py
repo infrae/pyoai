@@ -68,12 +68,15 @@ class Identify:
     def compression(self):
         return self._compression
     
-def datetime_to_datestamp(dt):
+def datetime_to_datestamp(dt, day_granularity=False):
     assert dt.tzinfo is None # only accept timezone naive datetimes
     # ignore microseconds
     dt = dt.replace(microsecond=0)
-    return dt.isoformat() + 'Z'
-    
+    result = dt.isoformat() + 'Z'
+    if day_granularity:
+        result = result[:-10]
+    return result
+
 def datestamp_to_datetime(datestamp):
     splitted = datestamp.split('T')
     if len(splitted) == 2:

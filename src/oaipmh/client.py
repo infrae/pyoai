@@ -19,11 +19,12 @@ class Error(Exception):
 
 class BaseClient(common.OAIPMH):
 
-    def __init__(self, metadata_registry=None):
+    def __init__(self, metadata_registry=None, day_granularity=False):
         self._metadata_registry = (
             metadata_registry or metadata.global_metadata_registry)
         self._ignore_bad_character_hack = 0
-    
+        self._day_granularity = day_granularity
+        
     def handleVerb(self, verb, kw):
         # validate kw first
         validation.validateArguments(verb, kw)
@@ -31,11 +32,13 @@ class BaseClient(common.OAIPMH):
         from_ = kw.get('from_')
         if from_ is not None:
             # turn it into 'from', not 'from_' before doing actual request
-            kw['from'] = common.datetime_to_datestamp(from_)
+            kw['from'] = common.datetime_to_datestamp(from_,
+                                                      self._day_granularity)
             del kw['from_']
         until = kw.get('until')
         if until is not None:
-            kw['until'] = common.datetime_to_datestamp(until)
+            kw['until'] = common.datetime_to_datestamp(until,
+                                                       self._day_granularity)
         # now call underlying implementation
         method_name = verb + '_impl'
         return getattr(self, method_name)(
@@ -261,8 +264,9 @@ class BaseClient(common.OAIPMH):
     
 class Client(BaseClient):
     def __init__(
-            self, base_url, metadata_registry=None, credentials=None):
-        BaseClient.__init__(self, metadata_registry)
+            self, base_url, metadata_registry=None, credentials=None,
+            day_granularity=False):
+        BaseClient.__init__(self, metadata_registry, day_granularity)
         self._base_url = base_url
         if credentials is not None:
             self._credentials = base64.encodestring('%s:%s' % credentials)
