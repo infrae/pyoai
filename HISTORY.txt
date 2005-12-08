@@ -8,9 +8,11 @@ under development
 Changes
 -------
 
-* Add support for setting day-level granularity on client. The client
-  will then only make requests with from and until in the granularity
-  of a day.
+* Add support for day-only granularity (YYYY-MM-DD) in client.
+  calling 'updateGranularity' with the client will check with the
+  server (using identify()) to see what granularity the server
+  supports.  If the server only supports day level granularity, the
+  client will make sure only YYYY-MM-DD timestamps are sent.
 
 2.0b1
 =====

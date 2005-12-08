@@ -19,12 +19,24 @@ class Error(Exception):
 
 class BaseClient(common.OAIPMH):
 
-    def __init__(self, metadata_registry=None, day_granularity=False):
+    def __init__(self, metadata_registry=None):
         self._metadata_registry = (
             metadata_registry or metadata.global_metadata_registry)
         self._ignore_bad_character_hack = 0
-        self._day_granularity = day_granularity
-        
+        self._day_granularity = False
+
+    def updateGranularity(self):
+        """Update the granularity setting dependent on that the server says.
+        """
+        identify = self.identify()
+        granularity = identify.granularity()
+        if granularity == 'YYYY-MM-DD':
+            self._day_granularity = True
+        elif granularity == 'YYYY-MM-DDThh:mm:ssZ':
+            self._day_granularity= False
+        else:
+            raise Error, "Non-standard granularity on server: %s" % granularity
+            
     def handleVerb(self, verb, kw):
         # validate kw first
         validation.validateArguments(verb, kw)
@@ -264,9 +276,8 @@ class BaseClient(common.OAIPMH):
     
 class Client(BaseClient):
     def __init__(
-            self, base_url, metadata_registry=None, credentials=None,
-            day_granularity=False):
-        BaseClient.__init__(self, metadata_registry, day_granularity)
+            self, base_url, metadata_registry=None, credentials=None):
+        BaseClient.__init__(self, metadata_registry)
         self._base_url = base_url
         if credentials is not None:
             self._credentials = base64.encodestring('%s:%s' % credentials)

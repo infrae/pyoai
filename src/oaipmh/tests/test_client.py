@@ -121,13 +121,15 @@ class ClientTestCase(TestCase):
             compare)
 
     def test_day_granularity(self):
-        fakeclient = GranularityFakeClient(day_granularity=False)
+        fakeclient = GranularityFakeClient(granularity='YYYY-MM-DDThh:mm:ssZ')
+        fakeclient.updateGranularity()
         try:
             fakeclient.listRecords(from_=datetime(2003, 04, 10, 14, 0),
                                    metadataPrefix='oai_dc')
         except TestError, e:
             self.assertEquals('2003-04-10T14:00:00Z', e.kw['from'])
-        fakeclient = GranularityFakeClient(day_granularity=True)
+        fakeclient = GranularityFakeClient(granularity='YYYY-MM-DD')
+        fakeclient.updateGranularity()
         try:
             fakeclient.listRecords(from_=datetime(2003, 04, 10, 14, 0),
                                    until=datetime(2004, 06, 17, 15, 30),
