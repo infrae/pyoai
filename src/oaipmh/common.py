@@ -67,10 +67,6 @@ class Identify:
 
     def compression(self):
         return self._compression
-
-def date_to_datestamp(d):
-    return datetime_to_datestamp(
-        datetime.datetime.combine(d, datetime.time(0)))
     
 def datetime_to_datestamp(dt):
     assert dt.tzinfo is None # only accept timezone naive datetimes
