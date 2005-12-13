@@ -297,7 +297,7 @@ class Client(BaseClient):
 
 def buildHeader(header_node, namespaces):
     e = etree.XPathEvaluator(header_node, namespaces).evaluate
-    identifier = str(e('string(oai:identifier/text())'))
+    identifier = e('string(oai:identifier/text())')
     datestamp = common.datestamp_to_datetime(
         str(e('string(oai:datestamp/text())')))
     setspec = [str(s) for s in e('oai:setSpec/text()')]
