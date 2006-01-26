@@ -2,8 +2,8 @@
 oaipmh changelog
 ================
 
-under development
-=================
+2.0
+===
 
 Changes
 -------
