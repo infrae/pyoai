@@ -46,8 +46,3 @@ class XMLSyntaxError(ClientError):
     """The OAI-PMH XML can not be parsed as it is not well-formed.
     """
     pass
-
-class MetadataError(ClientError):
-    """Metadata contains invalid data.
-    """
-    pass
