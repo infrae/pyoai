@@ -250,7 +250,10 @@ class BaseClient(common.OAIPMH):
 
     def makeRequestErrorHandling(self, **kw):
         xml = self.makeRequest(**kw)
-        tree = self.parse(xml)
+        try:
+            tree = self.parse(xml)
+        except SyntaxError:
+            raise error.XMLSyntaxError(kw)
         # check whether there are errors first
         e_errors = tree.xpath('/oai:OAI-PMH/oai:error',
                               namespaces=self.getNamespaces())

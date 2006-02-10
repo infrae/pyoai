@@ -60,12 +60,13 @@ def createMapping(mapping_path):
     return result
 
 class FakeCreaterClient(client.Client):
-    def __init__(self, base_url, mapping_path):
-        client.Client.__init__(self, base_url)
+    def __init__(self, base_url, mapping_path, metadata_registry):
+        client.Client.__init__(self, base_url, metadata_registry)
         self._mapping = {}
         self._mapping_path = mapping_path
         
     def makeRequest(self, **kw):
+        print kw
         text = client.Client.makeRequest(self, **kw)
         self._mapping[getRequestKey(kw)] = text
         return text

@@ -34,3 +34,20 @@ class NoSetHierarchyError(ErrorBase):
 
 class UnknownError(ErrorBase):
     pass
+
+# errors not defined by OAI-PMH but which can occur in a client when
+# the server is somehow misbehaving
+class ClientError(Exception):
+    def __init__(self, kw):
+        # request parameters that triggered this error
+        self.kw = kw
+
+class XMLSyntaxError(ClientError):
+    """The OAI-PMH XML can not be parsed as it is not well-formed.
+    """
+    pass
+
+class MetadataError(ClientError):
+    """Metadata contains invalid data.
+    """
+    pass
