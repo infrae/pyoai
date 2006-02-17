@@ -2,6 +2,15 @@
 oaipmh changelog
 ================
 
+under development
+=================
+
+Changes
+-------
+
+* Add infrastructure to deal with non-XML compliant OAI-PMH feeds;
+  an XMLSyntaxError is raised in that case.
+
 2.0
 ===
 
