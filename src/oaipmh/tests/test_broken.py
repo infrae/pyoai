@@ -18,15 +18,14 @@ class BrokenDataTestCase(TestCase):
     def test_notwellformed(self):
         fakeclient = self.createFakeClient('fake3')
         self.assertRaises(error.XMLSyntaxError, fakeclient.identify)
-        try:
-            fakeclient.identify()
-        except error.ClientError, e:
-            self.assertEquals(
-                {'verb': 'Identify'}, e.kw)
 
     def test_unknown_entities(self):
         fakeclient = self.createFakeClient('fake4')
         self.assertRaises(error.XMLSyntaxError, fakeclient.identify)
-    
+
+    def test_broken_datestamp(self):
+        fakeclient = self.createFakeClient('fake5')
+        self.assertRaises(error.DatestampError, fakeclient.identify)
+
 def test_suite():
     return TestSuite((makeSuite(BrokenDataTestCase), ))

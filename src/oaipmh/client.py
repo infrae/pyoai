@@ -10,6 +10,7 @@ from lxml import etree
 import time
 
 from oaipmh import common, metadata, validation, error
+from oaipmh.datestamp import datestamp_to_datetime, datetime_to_datestamp
 
 WAIT_DEFAULT = 120 # two minutes
 WAIT_MAX = 5
@@ -44,13 +45,13 @@ class BaseClient(common.OAIPMH):
         from_ = kw.get('from_')
         if from_ is not None:
             # turn it into 'from', not 'from_' before doing actual request
-            kw['from'] = common.datetime_to_datestamp(from_,
-                                                      self._day_granularity)
+            kw['from'] = datetime_to_datestamp(from_,
+                                               self._day_granularity)
             del kw['from_']
         until = kw.get('until')
         if until is not None:
-            kw['until'] = common.datetime_to_datestamp(until,
-                                                       self._day_granularity)
+            kw['until'] = datetime_to_datestamp(until,
+                                                self._day_granularity)
         # now call underlying implementation
         method_name = verb + '_impl'
         return getattr(self, method_name)(
@@ -115,7 +116,7 @@ class BaseClient(common.OAIPMH):
         baseURL = e('string(oai:baseURL/text())')
         protocolVersion = e('string(oai:protocolVersion/text())')
         adminEmails = e('oai:adminEmail/text()')
-        earliestDatestamp = common.datestamp_to_datetime(
+        earliestDatestamp = datestamp_to_datetime(
             e('string(oai:earliestDatestamp/text())'))
         deletedRecord = e('string(oai:deletedRecord/text())')
         granularity = e('string(oai:granularity/text())')
@@ -301,7 +302,7 @@ class Client(BaseClient):
 def buildHeader(header_node, namespaces):
     e = etree.XPathEvaluator(header_node, namespaces).evaluate
     identifier = e('string(oai:identifier/text())')
-    datestamp = common.datestamp_to_datetime(
+    datestamp = datestamp_to_datetime(
         str(e('string(oai:datestamp/text())')))
     setspec = [str(s) for s in e('oai:setSpec/text()')]
     deleted = e("@status = 'deleted'") 

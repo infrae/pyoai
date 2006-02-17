@@ -5,6 +5,7 @@ from urllib import urlencode
 import sys, cgi
 
 from oaipmh import common, metadata, validation, error
+from oaipmh.datestamp import datestamp_to_datetime, datetime_to_datestamp
 
 NS_OAIPMH = 'http://www.openarchives.org/OAI/2.0/'
 NS_XSI = 'http://www.w3.org/2001/XMLSchema-instance'
@@ -56,7 +57,7 @@ class XMLTreeServer:
             e.text = adminEmail
         e_earliestDatestamp = SubElement(e_identify,
                                          nsoai('earliestDatestamp'))
-        e_earliestDatestamp.text = common.datetime_to_datestamp(
+        e_earliestDatestamp.text = datetime_to_datestamp(
             identify.earliestDatestamp())
         e_deletedRecord = SubElement(e_identify,
                                      nsoai('deletedRecord'))
@@ -153,14 +154,14 @@ class XMLTreeServer:
         e_tree = ElementTree(element=e_oaipmh)
         e_responseDate = SubElement(e_oaipmh, nsoai('responseDate'))
         # date should be first possible moment
-        e_responseDate.text = common.datetime_to_datestamp(
+        e_responseDate.text = datetime_to_datestamp(
             datetime.utcnow().replace(microsecond=0))
         e_request = SubElement(e_oaipmh, nsoai('request'))
         for key, value in kw.items():
             if key == 'from_':
                 key = 'from'
             if key == 'from' or key == 'until':
-                value = common.datetime_to_datestamp(value)
+                value = datetime_to_datestamp(value)
             e_request.set(key, value)
         # XXX this is potentially slow..
         e_request.text = self._server.identify().baseURL()
@@ -210,7 +211,7 @@ class XMLTreeServer:
         e_identifier = SubElement(e_header, nsoai('identifier'))
         e_identifier.text = header.identifier()
         e_datestamp = SubElement(e_header, nsoai('datestamp'))
-        e_datestamp.text = common.datetime_to_datestamp(header.datestamp())
+        e_datestamp.text = datetime_to_datestamp(header.datestamp())
         for set in header.setSpec():
             e = SubElement(e_header, nsoai('setSpec'))
             e.text = set
@@ -262,11 +263,11 @@ class Server(common.ResumptionOAIPMH):
             from_ = request_kw.get('from')
             if from_ is not None:
                 # rename to from_ for internal use
-                request_kw['from_'] = common.datestamp_to_datetime(from_)
+                request_kw['from_'] = datestamp_to_datetime(from_)
                 del request_kw['from']
             until = request_kw.get('until')
             if until is not None:
-                request_kw['until'] = common.datestamp_to_datetime(until)
+                request_kw['until'] = datestamp_to_datetime(until)
             # now validate parameters
             try:
                 validation.validateResumptionArguments(verb, request_kw)
@@ -344,10 +345,10 @@ def encodeResumptionToken(kw, cursor):
     kw['cursor'] = str(cursor)
     from_ = kw.get('from_')
     if from_ is not None:
-        kw['from_'] = common.datetime_to_datestamp(from_)
+        kw['from_'] = datetime_to_datestamp(from_)
     until = kw.get('until')
     if until is not None:
-        kw['until'] = common.datetime_to_datestamp(until)
+        kw['until'] = datetime_to_datestamp(until)
     return urlencode(kw)
 
 def decodeResumptionToken(token):
@@ -361,7 +362,7 @@ def decodeResumptionToken(token):
     for key, value in kw.items():
         value = value[0]
         if key == 'from_' or key == 'until':
-            value = common.datestamp_to_datetime(value)
+            value = datestamp_to_datetime(value)
         result[key] = value
     try:
         cursor = int(result.pop('cursor'))

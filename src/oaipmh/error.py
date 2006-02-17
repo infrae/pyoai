@@ -38,11 +38,24 @@ class UnknownError(ErrorBase):
 # errors not defined by OAI-PMH but which can occur in a client when
 # the server is somehow misbehaving
 class ClientError(Exception):
-    def __init__(self, kw):
-        # request parameters that triggered this error
-        self.kw = kw
+    def details(self):
+        """Error details in human readable text.
+        """
+        raise NotImplementedError
 
 class XMLSyntaxError(ClientError):
     """The OAI-PMH XML can not be parsed as it is not well-formed.
     """
-    pass
+    def details(self):
+        return ("The data delivered by the server could not be parsed, as it "
+                "is not well-formed XML.")
+    
+class DatestampError(ClientError):
+    """The OAI-PMH datestamps were not proper UTC datestamps as by spec.
+    """
+    def __init__(self, datestamp):
+        self.datestamp = datestamp
+
+    def details(self):
+        return ("An illegal datestamp was encountered: %s" % self.datestamp)
+    

@@ -1,4 +1,4 @@
-import datetime
+from oaipmh import error
 
 class Header:
     def __init__(self, identifier, datestamp, setspec, deleted):
@@ -67,29 +67,6 @@ class Identify:
 
     def compression(self):
         return self._compression
-    
-def datetime_to_datestamp(dt, day_granularity=False):
-    assert dt.tzinfo is None # only accept timezone naive datetimes
-    # ignore microseconds
-    dt = dt.replace(microsecond=0)
-    result = dt.isoformat() + 'Z'
-    if day_granularity:
-        result = result[:-10]
-    return result
-
-def datestamp_to_datetime(datestamp):
-    splitted = datestamp.split('T')
-    if len(splitted) == 2:
-        d, t = splitted
-        # strip off 'Z'
-        t = t[:-1]
-    else:
-        d = splitted[0]
-        t = '00:00:00'
-    YYYY, MM, DD = d.split('-')
-    hh, mm, ss = t.split(':') # this assumes there's no timezone info
-    return datetime.datetime(
-        int(YYYY), int(MM), int(DD), int(hh), int(mm), int(ss))
     
 def ResumptionTokenSpec(dict):
     dict = dict.copy()

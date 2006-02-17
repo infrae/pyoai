@@ -11,6 +11,12 @@ Changes
 * Add infrastructure to deal with non-XML compliant OAI-PMH feeds;
   an XMLSyntaxError is raised in that case.
 
+* added tolerant_datestamp_to_datetime which is a bit more tolerant
+  than the normal datestamp_to_datetime when encountering bad 
+  datestamps.
+
+* Split off datestamp handling into separate datestamp module.
+
 2.0
 ===
 
