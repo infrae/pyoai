@@ -42,9 +42,11 @@ def tolerant_datestamp_to_datetime(datestamp):
     splitted = datestamp.split('T')
     if len(splitted) == 2:
         d, t = splitted
-        # split off any Z at the end
-        if t[-1] == 'Z':
-            t = t[:-1]
+        # if no Z is present, raise error
+        if t[-1] != 'Z':
+            raise DatestampError(datestamp)
+        # split off Z at the end
+        t = t[:-1]
     else:
         d = splitted[0]
         t = '00:00:00'
@@ -68,14 +70,3 @@ def tolerant_datestamp_to_datetime(datestamp):
         raise DatestampError(datestamp)
     return datetime.datetime(
         int(YYYY), int(MM), int(DD), int(hh), int(mm), int(ss))
-
-    #elif len(t_splitted) == 2:
-    #    hh, mm = t_splitted
-    #    ss = '00'
-    #elif len(t_splitted) == 1:
-    #    hh = t_splitted[0]
-    #    mm = '00'
-    #    ss = '00'
-    #else:
-    #    raise DatestampError(datestamp)
-    
