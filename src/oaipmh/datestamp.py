@@ -10,6 +10,11 @@ def datetime_to_datestamp(dt, day_granularity=False):
         result = result[:-10]
     return result
 
+# handy utility function not used by pyoai itself yet
+def date_to_datestamp(d, day_granularity=False): 	 
+    return datetime_to_datestamp( 	 
+        datetime.datetime.combine(d, datetime.time(0)), day_granularity)
+
 def datestamp_to_datetime(datestamp):
     try:
         return _datestamp_to_datetime(datestamp)
