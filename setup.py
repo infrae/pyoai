@@ -5,6 +5,7 @@ setup(
     version='2.1.4',
     author='Infrae',
     author_email='faassen@infrae.com',
+    url='http://www.infrae.com/download/oaipmh',
     description="""\
 The oaipmh module is a Python implementation of an "Open Archives
 Initiative Protocol for Metadata Harvesting" (version 2) client and server.
