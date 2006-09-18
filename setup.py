@@ -2,7 +2,7 @@ from setuptools import setup, find_packages
 
 setup(
     name='pyoai',
-    version='2.1.6',
+    version='2.1.5',
     author='Infrae',
     author_email='faassen@infrae.com',
     url='http://www.infrae.com/download/oaipmh',
