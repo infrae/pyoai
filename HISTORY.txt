@@ -2,6 +2,14 @@
 oaipmh changelog
 ================
 
+2.1.5 (2006-09-18)
+==================
+
+Changes
+-------
+
+* compatibility fix: it should work with lxml 1.1 now.
+
 2.1.4 (2006-06-16)
 ==================
 

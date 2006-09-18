@@ -87,8 +87,7 @@ class BaseClient(common.OAIPMH):
             xml = unicode(xml, 'UTF-8', 'replace') 	 
             # also get rid of character code 12 	 
             xml = xml.replace(chr(12), '?')
-        else:
-            xml = unicode(xml, 'UTF-8')
+            xml = xml.encode('UTF-8')
         return etree.XML(xml)
 
     def GetRecord_impl(self, args, tree):
