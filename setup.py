@@ -29,5 +29,5 @@ as well as construct your own OAI-PMH data provider.
     zip_safe=True,
     license='BSD',
     keywords='OAI-PMH xml archive',
-    install_requires=['lxml == 1.0.1'],
+    install_requires=['lxml'],
 )
