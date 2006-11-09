@@ -2,7 +2,7 @@ from oaipmh import common, error
 from datetime import datetime
 import random
 
-class FakeServerBase:
+class FakeServerCommon(object):
     def identify(self):
         return common.Identify(
             repositoryName='Fake',
@@ -13,6 +13,14 @@ class FakeServerBase:
             deletedRecord='transient',
             granularity='YYYY-MM-DDThh:mm:ssZ',
             compression=['identity'])
+
+    def getRecord(self, metadataPrefix, identifier):
+        try:
+            return self._data[int(identifier)]
+        except IndexError:
+            raise error.IdDoesNotExistError, "Id does not exist: %s" % identifier
+
+class FakeServerBase(FakeServerCommon):
     
     def listIdentifiers(self, metadataPrefix=None, from_=None, until=None,
                         set=None):
@@ -29,13 +37,24 @@ class FakeServerBase:
             if datestampInRange(header, from_, until):
                 result.append((header, metadata, about))
         return result
-        
-    def getRecord(self, metadataPrefix, identifier):
-        try:
-            return self._data[int(identifier)]
-        except IndexError:
-            raise error.IdDoesNotExistError, "Id does not exist: %s" % identifier
 
+class BatchingFakeServerBase(FakeServerCommon):
+    
+    def listIdentifiers(self, metadataPrefix=None, from_=None, until=None,
+                        set=None, cursor=0, batch_size=10):
+        result = []
+        for header, metadata, about in self._data:
+            if datestampInRange(header, from_, until):
+                result.append(header)
+        return result[cursor:cursor + batch_size]
+
+    def listRecords(self, metadataPrefix=None, from_=None, until=None,
+                    set=None, cursor=0, batch_size=10):
+        result = []
+        for header, metadata, about in self._data:
+            if datestampInRange(header, from_, until):
+                result.append((header, metadata, about))
+        return result[cursor:cursor + batch_size]
 
 def datestampInRange(header, from_, until):
     if from_ is not None and header.datestamp() < from_:
@@ -44,24 +63,30 @@ def datestampInRange(header, from_, until):
         return False
     return True
 
+def createFakeData():
+    data = []
+    for i in range(100):
+        # create some datestamp spread
+        year = 2004
+        month = i % 12 + 1
+        day = i % 28 + 1
+        hour = i % 24
+        minute = i % 60
+        second = i % 60
+        datestamp = datetime(year, month, day, hour, minute, second)
+        data.append((common.Header(str(i), datestamp, '', False),
+                     common.Metadata({'title': ['Title %s' % i]}),
+                     None))
+    return data
+    
 class FakeServer(FakeServerBase):
     def __init__(self):
-        data = []
-        
-        for i in range(100):
-            # create some datestamp spread
-            year = 2004
-            month = i % 12 + 1
-            day = i % 28 + 1
-            hour = i % 24
-            minute = i % 60
-            second = i % 60
-            datestamp = datetime(year, month, day, hour, minute, second)
-            data.append((common.Header(str(i), datestamp, '', False),
-                         common.Metadata({'title': ['Title %s' % i]}),
-                         None))
-        self._data = data
+        self._data = createFakeData()
 
+class BatchingFakeServer(BatchingFakeServerBase):
+    def __init__(self):
+        self._data = createFakeData()
+    
 class FakeServerWithDeletions(FakeServerBase):
 
     def __init__(self):

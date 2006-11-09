@@ -82,7 +82,35 @@ class IOAI:
 
         Returns an iterable of setSpec, setName tuples (strings).
         """
+        
+class IBatchingOAI:
+    """Very similar to IOAI, but the implementation can be batch-aware.
 
+    Methods that support resumption will get two extra arguments,
+    cursor and batch_size, which indicate the batch currently being
+    requested.
+    """
+    
+    def getRecord(metadataPrefix, identifier):
+        pass
+    
+    def identify():
+        pass
+    
+    def listIdentifiers(metadataPrefix, set=None, from_=None, until=None,
+                        cursor=0, batch_size=10):
+        pass
+    
+    def listMetadataFormats(identifier=None):
+        pass
+    
+    def listRecords(metadataPrefix, set=None, from_=None, until=None,
+                    cursor=0, batch_size=10):
+        pass
+    
+    def listSets():
+        pass
+    
 class IIdentify:
     def repositoryName():
         """Name of repository.

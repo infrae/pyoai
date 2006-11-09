@@ -19,16 +19,16 @@ nsmap = {
     'dc': NS_DC
     }
 
-class XMLTreeServer:
+class XMLTreeServer(object):
     """A server that responds to messages by returning XML trees.
 
     This is an implementation class that normally would not be exposed
     to the outside world.
 
-    Takes an object conforming to the OAIPMH API.
+    Takes a server object conforming to the ResumptionOAIPMH interface.
     """
-    def __init__(self, server, metadata_registry, resumption_batch_size=10):
-        self._server = Resumption(server, resumption_batch_size)
+    def __init__(self, server, metadata_registry):
+        self._server = server
         self._metadata_registry = (
             metadata_registry or metadata.global_metadata_registry)
         
@@ -224,15 +224,13 @@ class XMLTreeServer:
         self._metadata_registry.writeMetadata(
             metadata_prefix, e_metadata, metadata)
 
-class Server(common.ResumptionOAIPMH):
+class ServerBase(common.ResumptionOAIPMH):
     """A server that responds to messages by returning OAI-PMH compliant XML.
 
-    Takes a server object complying with the OAIPMH interface.
+    Takes a server object complying with the ResumptionOAIPMH interface.
     """
-    def __init__(self, server, metadata_registry=None,
-                 resumption_batch_size=10):
-        self._tree_server = XMLTreeServer(server, metadata_registry,
-                                          resumption_batch_size)
+    def __init__(self, server, metadata_registry=None):
+        self._tree_server = XMLTreeServer(server, metadata_registry)
 
     def handleRequest(self, request_kw):
         """Handles incoming OAI-PMH request.
@@ -288,15 +286,28 @@ class Server(common.ResumptionOAIPMH):
         type, value, traceback = exc_info
         return etree.tostring(
             self._tree_server.handleException(value).getroot())
-    
+
+class Server(ServerBase):
+    """Expects to be initialized with a IOAI server implementation.
+    """
+    def __init__(self, server, metadata_registry=None,
+                 resumption_batch_size=10):
+        super(Server, self).__init__(
+            Resumption(server, resumption_batch_size),
+            metadata_registry)
+
+class BatchingServer(ServerBase):
+    """Expects to be initialized with a IBatchingOAI server implementation.
+    """
+    def __init__(self, server, metadata_registry=None,
+                 resumption_batch_size=10):
+        super(Server, self).__init__(
+            BatchingResumption(server, resumption_batch_size),
+            metadata_registry)
+
 class Resumption(common.ResumptionOAIPMH):
-    """There are two interfaces:
-
-    OAIPMH
-
-    ResumptionOAIPMH
-
-    The Resumption class can turn a plain OAIPMH interface into
+    """
+    The Resumption class can turn a plain IOAIPMH interface into
     a ResumptionOAIPMH interface
 
     This implementation is not particularly efficient for large
@@ -325,8 +336,10 @@ class Resumption(common.ResumptionOAIPMH):
             else:
                 resumptionToken = None
             return result[cursor:end_batch], resumptionToken
+
         # we're not handling resumption token, so do request
         result = method(**kw)
+
         # now handle resumption system
         if verb in ['ListSets', 'ListIdentifiers', 'ListRecords']:
             # XXX defeat the laziness effect of any generators..
@@ -340,6 +353,48 @@ class Resumption(common.ResumptionOAIPMH):
             return result[0:end_batch], resumptionToken
         return result
 
+class BatchingResumption(common.ResumptionOAIPMH):
+    """
+    The BatchingResumption class can turn a IBatchingOAIPMH interface into
+    a ResumptionOAIPMH interface.
+    """
+    
+    def __init__(self, server, batch_size=10):
+        self._server = server
+        self._batch_size = batch_size
+        
+    def handleVerb(self, verb, kw):
+        if 'resumptionToken' in kw:
+            kw, cursor = decodeResumptionToken(
+                kw['resumptionToken'])
+            kw['cursor'] = cursor
+            
+        method = common.getMethodForVerb(self._server, verb)
+
+        # now handle resumption system
+        if verb in ['ListSets', 'ListIdentifiers', 'ListRecords']:
+            kw = kw.copy()
+            cursor = kw.get('cursor', None)
+            if cursor is None:
+                kw['cursor'] = cursor = 0
+            # we request 1 beyond the batch size, so that
+            # if we retrieve <= batch_size items, we know we
+            # don't need to output another resumption token
+            kw['batch_size'] = self._batch_size + 1  
+            result = method(**kw)
+            if len(result) > self._batch_size:
+                # more results are expected, so encode resumption token
+                resumptionToken = encodeResumptionToken(
+                    kw, cursor + self._batch_size)
+                # we also want to result only the batch_size, so pop the
+                # last one
+                result.pop()
+            else:
+                # no more results are expected
+                resumptionToken = None
+            return result, resumptionToken
+        return method(**kw)
+    
 def encodeResumptionToken(kw, cursor):
     kw = kw.copy()
     kw['cursor'] = str(cursor)

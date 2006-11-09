@@ -27,7 +27,8 @@ class XMLTreeServerTestCase(unittest.TestCase):
         myserver = fakeclient.FakeClient(fake1)
         metadata_registry = metadata.MetadataRegistry()
         metadata_registry.registerWriter('oai_dc', server.oai_dc_writer)
-        return server.XMLTreeServer(myserver, metadata_registry)
+        return server.XMLTreeServer(server.Resumption(myserver),
+                                    metadata_registry)
 
     def test_getRecord(self):
         tree = self._server.getRecord(
@@ -106,7 +107,52 @@ class ResumptionTestCase(unittest.TestCase):
     def test_tree_resumption(self):
         metadata_registry = metadata.MetadataRegistry()
         metadata_registry.registerWriter('oai_dc', server.oai_dc_writer)
-        myserver = server.XMLTreeServer(self._fakeserver, metadata_registry)
+        myserver = server.XMLTreeServer(
+            self._server, metadata_registry)
+        tree = myserver.listIdentifiers(metadataPrefix='oai_dc')
+        self.assert_(oaischema.validate(tree))
+        # we should find a resumptionToken element with text
+        self.assert_(
+            tree.xpath('//oai:resumptionToken/text()', {'oai': NS_OAIPMH} ))
+
+class BatchingResumptionTestCase(unittest.TestCase):
+    def setUp(self):
+        self._fakeserver = fakeserver.BatchingFakeServer()
+        self._server = server.BatchingResumption(self._fakeserver, 10)
+
+    def _listIdentifiers(self, resumption_server):
+        headers = []
+        result, token = resumption_server.listIdentifiers(
+            metadataPrefix='oai_dc')
+        headers.extend(result)
+        self.assert_(token is not None)
+        while token is not None:
+            self.assert_(result)
+            result, token = resumption_server.listIdentifiers(
+                resumptionToken=token)
+            headers.extend(result)
+        self.assertEquals([str(i) for i in range(100)],
+                          [header.identifier() for header in headers])
+
+    def test_resumption(self):
+        self._listIdentifiers(self._server)
+ 
+    def test_resumption_nonexact(self):
+        myserver = server.BatchingResumption(self._fakeserver, 13)
+        self._listIdentifiers(myserver)
+
+    def test_resumption_overflow(self):
+        myserver = server.BatchingResumption(self._fakeserver, 300)
+        result, token = myserver.listIdentifiers(
+            metadataPrefix='oai_dc')
+        self.assert_(token is None)
+        self.assertEquals([str(i) for i in range(100)],
+                          [header.identifier() for header in result])
+        
+    def test_tree_resumption(self):
+        metadata_registry = metadata.MetadataRegistry()
+        metadata_registry.registerWriter('oai_dc', server.oai_dc_writer)
+        myserver = server.XMLTreeServer(self._server, metadata_registry)
         tree = myserver.listIdentifiers(metadataPrefix='oai_dc')
         self.assert_(oaischema.validate(tree))
         # we should find a resumptionToken element with text
@@ -275,6 +321,7 @@ def test_suite():
         unittest.makeSuite(XMLTreeServerTestCase),
         unittest.makeSuite(ServerTestCase),
         unittest.makeSuite(ResumptionTestCase),
+        unittest.makeSuite(BatchingResumptionTestCase),
         unittest.makeSuite(ClientServerTestCase),
         unittest.makeSuite(ErrorTestCase),
         unittest.makeSuite(DeletionTestCase)])

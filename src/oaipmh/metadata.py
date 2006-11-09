@@ -2,7 +2,7 @@ from lxml import etree
 from lxml.etree import SubElement
 from oaipmh import common
 
-class MetadataRegistry:
+class MetadataRegistry(object):
     """A registry that contains readers and writers of metadata.
 
     a reader is a function that takes a chunk of (parsed) XML and
@@ -49,7 +49,7 @@ global_metadata_registry = MetadataRegistry()
 class Error(Exception):
     pass
 
-class MetadataReader:
+class MetadataReader(object):
     """A default implementation of a reader based on fields.
     """
     def __init__(self, fields, namespaces=None):

@@ -1,6 +1,6 @@
 from oaipmh import error
 
-class Header:
+class Header(object):
     def __init__(self, identifier, datestamp, setspec, deleted):
         self._identifier = identifier
         self._datestamp = datestamp
@@ -19,7 +19,7 @@ class Header:
     def isDeleted(self):
         return self._deleted
 
-class Metadata:
+class Metadata(object):
     def __init__(self, map):
         self._map = map
 
@@ -31,7 +31,7 @@ class Metadata:
 
     __getitem__ = getField
     
-class Identify:
+class Identify(object):
     def __init__(self, repositoryName, baseURL, protocolVersion, adminEmails,
                  earliestDatestamp, deletedRecord, granularity, compression):
         self._repositoryName = repositoryName
@@ -86,7 +86,7 @@ def OAIMethod(verb):
         return obj(self, **kw)
     return method
 
-class OAIPMH:
+class OAIPMH(object):
     """Mixin that implements the Python-level OAI-PMH interface.
 
     It does not include resumptionToken handling.
@@ -121,7 +121,7 @@ class OAIPMH:
         'ListSets',
         )
     
-class ResumptionOAIPMH:
+class ResumptionOAIPMH(object):
     """Mixin that implements the Resumption-capable OAI-PMH interface.
 
     It passes the arguments on to the 'handleVerb' method, which

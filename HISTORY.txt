@@ -2,6 +2,18 @@
 oaipmh changelog
 ================
 
+unreleased
+==========
+
+Changes
+-------
+
+* Support for BatchingServer. A BatchingServer implements the
+  IBatchingOAI interface. This is very similar to IOAI, but methods
+  get a 'cursor' and 'batch_size' argument. This can be used to
+  efficiently implement batching OAI servers on top of relational
+  databases.
+
 2.1.5 (2006-09-18)
 ==================
 
