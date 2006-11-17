@@ -14,6 +14,9 @@ Changes
   efficiently implement batching OAI servers on top of relational
   databases.
 
+* Make it possible to explicitly pass None as the from_ or until parameters
+  for a OAIPMH client.
+
 2.1.5 (2006-09-18)
 ==================
 

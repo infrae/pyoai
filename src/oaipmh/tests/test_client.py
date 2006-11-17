@@ -67,6 +67,27 @@ class ClientTestCase(TestCase):
         self.assert_(not header.isDeleted())
         self.assertEquals(16, len(headers))
 
+
+    def test_listIdentifiers_until_none(self):
+        # test listIdentifiers with until argument as None explicitly
+        headers = fakeclient.listIdentifiers(from_=datetime(2003, 04, 10),
+                                             until=None,
+                                             metadataPrefix='oai_dc')
+        self.assertEquals(16, len(list(headers)))
+
+    def test_listIdentifiers_from_none(self):
+        # test listIdentifiers with until argument as None explicitly
+
+        # XXX unfortunately a white box test relying on particular
+        # exception behavior of the fake server. We do verify whether
+        # from or from_ doesn't appear in the request args though
+        try:
+            headers = fakeclient.listIdentifiers(from_=None,
+                                                 metadataPrefix='oai_dc')
+        except KeyError, e:
+            self.assertEquals('metadataPrefix=oai_dc&verb=ListIdentifiers',
+                              e.args[0])
+            
     def test_listIdentifiers_argument_error(self):
         self.assertRaises(
             validation.BadArgumentError,
