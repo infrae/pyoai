@@ -284,12 +284,13 @@ class ServerBase(common.ResumptionOAIPMH):
         
     def handleVerb(self, verb, kw):
         method = common.getMethodForVerb(self._tree_server, verb)
-        return etree.tostring(method(**kw).getroot())    
-
+        return etree.tostring(method(**kw).getroot(), encoding='UTF-8')
+  
     def handleException(self, kw, exc_info):
         type, value, traceback = exc_info
         return etree.tostring(
-            self._tree_server.handleException(value).getroot())
+            self._tree_server.handleException(value).getroot(),
+            encoding='UTF-8')
 
 class Server(ServerBase):
     """Expects to be initialized with a IOAI server implementation.

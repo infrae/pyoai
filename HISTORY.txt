@@ -21,6 +21,8 @@ Changes
   programmer to specify either namespace prefix -> namespace URI mappings
   that should be used in the server output.
 
+* fixed a bug where the output wasn't encoded properly as UTF-8.
+
 2.1.5 (2006-09-18)
 ==================
 
