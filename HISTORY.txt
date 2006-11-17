@@ -17,6 +17,10 @@ Changes
 * Make it possible to explicitly pass None as the from_ or until parameters
   for a OAIPMH client.
 
+* an extra nsmap argument to Server and BatchingServer allows the
+  programmer to specify either namespace prefix -> namespace URI mappings
+  that should be used in the server output.
+
 2.1.5 (2006-09-18)
 ==================
 

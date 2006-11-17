@@ -12,7 +12,7 @@ NS_XSI = 'http://www.w3.org/2001/XMLSchema-instance'
 NS_OAIDC = 'http://www.openarchives.org/OAI/2.0/oai_dc/'
 NS_DC = "http://purl.org/dc/elements/1.1/"
 
-nsmap = {
+NSMAP = {
     None: NS_OAIPMH,
     'xsi': NS_XSI,
     'oai_dc': NS_OAIDC,
@@ -27,7 +27,11 @@ class XMLTreeServer(object):
 
     Takes a server object conforming to the ResumptionOAIPMH interface.
     """
-    def __init__(self, server, metadata_registry):
+    def __init__(self, server, metadata_registry, nsmap=None):
+        if nsmap is None:
+            nsmap = {}
+        self._nsmap = NSMAP.copy()
+        self._nsmap.update(nsmap)
         self._server = server
         self._metadata_registry = (
             metadata_registry or metadata.global_metadata_registry)
@@ -147,7 +151,7 @@ class XMLTreeServer(object):
         raise
     
     def _outputBasicEnvelope(self, **kw):
-        e_oaipmh = Element(nsoai('OAI-PMH'), nsmap=nsmap)
+        e_oaipmh = Element(nsoai('OAI-PMH'), nsmap=self._nsmap)
         e_oaipmh.set('{%s}schemaLocation' % NS_XSI,
                      ('http://www.openarchives.org/OAI/2.0/ '
                       'http://www.openarchives.org/OAI/2.0/OAI-PMH.xsd'))
@@ -229,8 +233,8 @@ class ServerBase(common.ResumptionOAIPMH):
 
     Takes a server object complying with the ResumptionOAIPMH interface.
     """
-    def __init__(self, server, metadata_registry=None):
-        self._tree_server = XMLTreeServer(server, metadata_registry)
+    def __init__(self, server, metadata_registry=None, nsmap=None):
+        self._tree_server = XMLTreeServer(server, metadata_registry, nsmap)
 
     def handleRequest(self, request_kw):
         """Handles incoming OAI-PMH request.
@@ -290,20 +294,22 @@ class ServerBase(common.ResumptionOAIPMH):
 class Server(ServerBase):
     """Expects to be initialized with a IOAI server implementation.
     """
-    def __init__(self, server, metadata_registry=None,
+    def __init__(self, server, metadata_registry=None, nsmap=None,
                  resumption_batch_size=10):
         super(Server, self).__init__(
             Resumption(server, resumption_batch_size),
-            metadata_registry)
+            metadata_registry,
+            nsmap)
 
 class BatchingServer(ServerBase):
     """Expects to be initialized with a IBatchingOAI server implementation.
     """
-    def __init__(self, server, metadata_registry=None,
+    def __init__(self, server, metadata_registry=None, nsmap=None,
                  resumption_batch_size=10):
         super(BatchingServer, self).__init__(
             BatchingResumption(server, resumption_batch_size),
-            metadata_registry)
+            metadata_registry,
+            nsmap)
 
 class Resumption(common.ResumptionOAIPMH):
     """

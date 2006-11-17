@@ -88,7 +88,7 @@ class ServerTestCase(unittest.TestCase):
             metadataPrefix='oai_dc')
         tree = etree.parse(StringIO(xml))
         self.assert_(oaischema.validate(tree))
-
+        
 class ResumptionTestCase(unittest.TestCase):
     def setUp(self):
         self._fakeserver = fakeserver.FakeServer()
@@ -114,7 +114,7 @@ class ResumptionTestCase(unittest.TestCase):
         # we should find a resumptionToken element with text
         self.assert_(
             tree.xpath('//oai:resumptionToken/text()', {'oai': NS_OAIPMH} ))
-
+        
 class BatchingResumptionTestCase(unittest.TestCase):
     def setUp(self):
         self._fakeserver = fakeserver.BatchingFakeServer()
@@ -315,7 +315,31 @@ class DeletionTestCase(unittest.TestCase):
             metadataPrefix='oai_dc', identifier='1')
         self.assert_(header.isDeleted())
         self.assertEquals(None, metadata)
-            
+
+class NsMapTestCase(unittest.TestCase):
+    def setUp(self):
+        self._fakeserver = fakeserver.FakeServer()
+        metadata_registry = metadata.MetadataRegistry()
+        metadata_registry.registerWriter('oai_dc', server.oai_dc_writer)
+        metadata_registry.registerReader('oai_dc', metadata.oai_dc_reader)
+        self._xmlserver = server.XMLTreeServer(
+            self._fakeserver,
+            metadata_registry,
+            nsmap={'cow': 'http://www.cow.com'})
+        self._server = server.Server(
+            self._fakeserver,
+            metadata_registry,
+            nsmap={'cow': 'http://www.cow.com'})
+        
+    def test_nsmap(self):
+        # if we pass another nsmap along to the server constructor, we
+        # can control extra namespaces in the output envelope
+        tree = self._xmlserver.identify()
+        self.assertEquals(
+            'http://www.cow.com',
+            tree.getroot().nsmap['cow'])
+        
+    
 def test_suite():
     return unittest.TestSuite([
         unittest.makeSuite(XMLTreeServerTestCase),
@@ -324,7 +348,8 @@ def test_suite():
         unittest.makeSuite(BatchingResumptionTestCase),
         unittest.makeSuite(ClientServerTestCase),
         unittest.makeSuite(ErrorTestCase),
-        unittest.makeSuite(DeletionTestCase)])
+        unittest.makeSuite(DeletionTestCase),
+        unittest.makeSuite(NsMapTestCase)])
 
 if __name__=='__main__':
     main(defaultTest='test_suite')
