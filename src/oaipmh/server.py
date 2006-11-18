@@ -39,7 +39,6 @@ class XMLTreeServer(object):
     def getRecord(self, **kw):
         envelope, e_getRecord = self._outputEnvelope(
             verb='GetRecord', **kw)
-        record = self._server.getRecord(**kw)
         header, metadata, about = self._server.getRecord(**kw)
         e_record = SubElement(e_getRecord, nsoai('record'))
         self._outputHeader(e_record, header)   
