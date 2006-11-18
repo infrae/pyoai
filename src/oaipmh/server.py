@@ -388,6 +388,7 @@ class BatchingResumption(common.ResumptionOAIPMH):
             # don't need to output another resumption token
             kw['batch_size'] = self._batch_size + 1  
             result = method(**kw)
+            result = list(result)
             if len(result) > self._batch_size:
                 # more results are expected, so encode resumption token
                 resumptionToken = encodeResumptionToken(
