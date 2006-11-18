@@ -120,7 +120,7 @@ class BatchingResumptionTestCase(unittest.TestCase):
         self._fakeserver = fakeserver.BatchingFakeServer()
         self._server = server.BatchingResumption(self._fakeserver, 10)
 
-    def _listIdentifiers(self, resumption_server):
+    def _listIdentifiers(self, resumption_server, expected_length):
         headers = []
         result, token = resumption_server.listIdentifiers(
             metadataPrefix='oai_dc')
@@ -128,6 +128,7 @@ class BatchingResumptionTestCase(unittest.TestCase):
         self.assert_(token is not None)
         while token is not None:
             self.assert_(result)
+            self.assertEquals(expected_length, len(result))
             result, token = resumption_server.listIdentifiers(
                 resumptionToken=token)
             headers.extend(result)
@@ -135,11 +136,11 @@ class BatchingResumptionTestCase(unittest.TestCase):
                           [header.identifier() for header in headers])
 
     def test_resumption(self):
-        self._listIdentifiers(self._server)
+        self._listIdentifiers(self._server, 10)
  
     def test_resumption_nonexact(self):
         myserver = server.BatchingResumption(self._fakeserver, 13)
-        self._listIdentifiers(myserver)
+        self._listIdentifiers(myserver, 13)
 
     def test_resumption_overflow(self):
         myserver = server.BatchingResumption(self._fakeserver, 300)
