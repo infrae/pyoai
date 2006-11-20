@@ -11,6 +11,7 @@ Infrae oaipmh module developers
 
 Martijn Faassen <faassen@infrae.com>
 Eric Casteleijn <eric@infrae.com>
+Jasper Op de Coul <jasper@infrae.com>
 
 Thanks to
 =========
