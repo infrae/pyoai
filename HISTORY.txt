@@ -2,6 +2,14 @@
 oaipmh changelog
 ================
 
+trunk (unreleased)
+==================
+
+Bugs fixed
+----------
+
+* Fix for client code that handles 503 response from server.
+
 2.2 (2006-11-20)
 ================
 

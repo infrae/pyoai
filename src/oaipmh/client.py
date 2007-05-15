@@ -338,7 +338,7 @@ def retrieveFromUrlWaiting(request,
             if e.code == 503:
                 try:
                     retryAfter = int(e.hdrs.get('Retry-After'))
-                except ValueError:
+                except TypeError:
                     retryAfter = None
                 if retryAfter is None:
                     time.sleep(wait_default)
