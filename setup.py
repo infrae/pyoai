@@ -24,7 +24,7 @@ With it, you can easily harvest existing OAI-PMH compliant data providers,
 as well as construct your own OAI-PMH data provider.
 """,
     
-    packages=find_packages('src', exclude=['*.tests']),
+    packages=find_packages('src'),
     package_dir = {'': 'src'},
     zip_safe=True,
     license='BSD',
