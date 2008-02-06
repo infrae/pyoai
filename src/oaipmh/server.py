@@ -1,7 +1,7 @@
 from lxml.etree import ElementTree, Element, SubElement
 from lxml import etree
 from datetime import datetime
-from urllib import urlencode
+from urllib import quote, unquote, urlencode
 import sys, cgi
 
 from oaipmh import common, metadata, validation, error
@@ -414,10 +414,11 @@ def encodeResumptionToken(kw, cursor):
     until = kw.get('until')
     if until is not None:
         kw['until'] = datetime_to_datestamp(until)
-    return urlencode(kw)
+    return quote(urlencode(kw))
 
 def decodeResumptionToken(token):
-    token = str(token)
+    token = str(unquote(token))
+    
     try:
         kw = cgi.parse_qs(token, True, True)
     except ValueError:
