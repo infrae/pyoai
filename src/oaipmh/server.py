@@ -285,6 +285,7 @@ class ServerBase(common.ResumptionOAIPMH):
         method = common.getMethodForVerb(self._tree_server, verb)
         return etree.tostring(method(**kw).getroot(), 
                               encoding='UTF-8',
+                              xml_declaration=True,
                               pretty_print=True)
   
     def handleException(self, kw, exc_info):
@@ -292,6 +293,7 @@ class ServerBase(common.ResumptionOAIPMH):
         return etree.tostring(
             self._tree_server.handleException(value).getroot(),
             encoding='UTF-8',
+            xml_declaration=True,
             pretty_print=True)
 
 class Server(ServerBase):
