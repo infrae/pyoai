@@ -5,19 +5,16 @@ oaipmh changelog
 trunk (unreleased)
 ==================
 
-2.3 (2008-04-04)
+2.2.1 (2008-04-04)
 ================
 
-New Features
-------------
+Changes
+-------
 
 * Added xml declaration to server output
 * Prettyprint xml output
-
-Bugs fixed
-----------
-
-* Fix bugs to be compatible with lxml 2.0
+* compatibility fix: should be compatible with lxml 2.0 now
+* server resumption tokens now work with POST requests.
 * Fix for client code that handles 503 response from server.
 
 2.2 (2006-11-20)
