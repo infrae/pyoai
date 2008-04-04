@@ -112,10 +112,11 @@ class BaseClient(common.OAIPMH):
     
     def Identify_impl(self, args, tree):
         namespaces = self.getNamespaces()
-        evaluator = etree.XPathEvaluator(tree, namespaces)
+        evaluator = etree.XPathEvaluator(tree, namespaces=namespaces)
         identify_node = evaluator.evaluate(
             '/oai:OAI-PMH/oai:Identify')[0]
-        identify_evaluator = etree.XPathEvaluator(identify_node, namespaces)
+        identify_evaluator = etree.XPathEvaluator(identify_node,
+                                                  namespaces=namespaces)
         e = identify_evaluator.evaluate
 
         repositoryName = e('string(oai:repositoryName/text())')
@@ -146,13 +147,15 @@ class BaseClient(common.OAIPMH):
 
     def ListMetadataFormats_impl(self, args, tree):
         namespaces = self.getNamespaces()
-        evaluator = etree.XPathEvaluator(tree, namespaces)
+        evaluator = etree.XPathEvaluator(tree, 
+                                         namespaces=namespaces)
 
         metadataFormat_nodes = evaluator.evaluate(
             '/oai:OAI-PMH/oai:ListMetadataFormats/oai:metadataFormat')
         metadataFormats = []
         for metadataFormat_node in metadataFormat_nodes:
-            e = etree.XPathEvaluator(metadataFormat_node, namespaces).evaluate
+            e = etree.XPathEvaluator(metadataFormat_node, 
+                                     namespaces=namespaces).evaluate
             metadataPrefix = e('string(oai:metadataPrefix/text())')
             schema = e('string(oai:schema/text())')
             metadataNamespace = e('string(oai:metadataNamespace/text())')
@@ -194,7 +197,8 @@ class BaseClient(common.OAIPMH):
     def buildRecords(self,
                      metadata_prefix, namespaces, metadata_registry, tree):
         # first find resumption token if available
-        evaluator = etree.XPathEvaluator(tree, namespaces)
+        evaluator = etree.XPathEvaluator(tree,
+                                         namespaces=namespaces)
         token = evaluator.evaluate(
             'string(/oai:OAI-PMH/*/oai:resumptionToken/text())')
         if token.strip() == '':
@@ -203,7 +207,8 @@ class BaseClient(common.OAIPMH):
             '/oai:OAI-PMH/*/oai:record')
         result = []
         for record_node in record_nodes:
-            record_evaluator = etree.XPathEvaluator(record_node, namespaces)
+            record_evaluator = etree.XPathEvaluator(record_node, 
+                                                    namespaces=namespaces)
             e = record_evaluator.evaluate
             # find header node
             header_node = e('oai:header')[0]
@@ -223,7 +228,8 @@ class BaseClient(common.OAIPMH):
         return result, token
 
     def buildIdentifiers(self, namespaces, tree):
-        evaluator = etree.XPathEvaluator(tree, namespaces)
+        evaluator = etree.XPathEvaluator(tree, 
+                                         namespaces=namespaces)
         # first find resumption token is available
         token = evaluator.evaluate(
             'string(/oai:OAI-PMH/oai:ListIdentifiers/oai:resumptionToken/text())')
@@ -238,7 +244,8 @@ class BaseClient(common.OAIPMH):
         return result, token
 
     def buildSets(self, namespaces, tree):
-        evaluator = etree.XPathEvaluator(tree, namespaces)
+        evaluator = etree.XPathEvaluator(tree, 
+                                         namespaces=namespaces)
         # first find resumption token if available
         token = evaluator.evaluate(
             'string(/oai:OAI-PMH/oai:ListSets/oai:resumptionToken/text())')
@@ -248,7 +255,8 @@ class BaseClient(common.OAIPMH):
             '/oai:OAI-PMH/oai:ListSets/oai:set')
         sets = []
         for set_node in set_nodes:
-            e = etree.XPathEvaluator(set_node, namespaces).evaluate
+            e = etree.XPathEvaluator(set_node, 
+                                     namespaces=namespaces).evaluate
             setSpec = e('string(oai:setSpec/text())')
             setName = e('string(oai:setName/text())')
             # XXX setDescription nodes
@@ -306,7 +314,8 @@ class Client(BaseClient):
         return retrieveFromUrlWaiting(request)
 
 def buildHeader(header_node, namespaces):
-    e = etree.XPathEvaluator(header_node, namespaces).evaluate
+    e = etree.XPathEvaluator(header_node, 
+                            namespaces=namespaces).evaluate
     identifier = e('string(oai:identifier/text())')
     datestamp = datestamp_to_datetime(
         str(e('string(oai:datestamp/text())')))

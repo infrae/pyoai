@@ -2,7 +2,9 @@ from oaipmh import error
 
 class Header(object):
     def __init__(self, identifier, datestamp, setspec, deleted):
-        self._identifier = identifier
+        # force identifier to be a string, it might be 
+        # an lxml.etree._ElementStringResult...
+        self._identifier = str(identifier)
         self._datestamp = datestamp
         self._setspec = setspec
         self._deleted = deleted

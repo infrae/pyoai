@@ -59,7 +59,8 @@ class MetadataReader(object):
     def __call__(self, element):
         map = {}
         # create XPathEvaluator for this element
-        xpath_evaluator = etree.XPathEvaluator(element, self._namespaces)
+        xpath_evaluator = etree.XPathEvaluator(element, 
+                                               namespaces=self._namespaces)
         
         e = xpath_evaluator.evaluate
         # now extra field info according to xpath expr
@@ -69,9 +70,13 @@ class MetadataReader(object):
             elif field_type == 'bytesList':
                 value = [str(item) for item in e(expr)]
             elif field_type == 'text':
-                value = e(expr)
+                # make sure we get back unicode strings instead
+                # of lxml.etree._ElementUnicodeResult objects.
+                value = unicode(e(expr))
             elif field_type == 'textList':
-                value = e(expr)
+                # make sure we get back unicode strings instead
+                # of lxml.etree._ElementUnicodeResult objects.
+                value = [unicode(v) for v in e(expr)]
             else:
                 raise Error, "Unknown field type: %s" % field_type
             map[field_name] = value

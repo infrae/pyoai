@@ -5,9 +5,16 @@ oaipmh changelog
 trunk (unreleased)
 ==================
 
+New Features
+------------
+
+* Added xml declaration to server output
+* Prettyprint xml output
+
 Bugs fixed
 ----------
 
+* Fix bugs to be compatible with lxml 2.0
 * Fix for client code that handles 503 response from server.
 
 2.2 (2006-11-20)
