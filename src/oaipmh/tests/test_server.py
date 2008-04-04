@@ -113,7 +113,8 @@ class ResumptionTestCase(unittest.TestCase):
         self.assert_(oaischema.validate(tree))
         # we should find a resumptionToken element with text
         self.assert_(
-            tree.xpath('//oai:resumptionToken/text()', {'oai': NS_OAIPMH} ))
+            tree.xpath('//oai:resumptionToken/text()', 
+                       namespaces={'oai': NS_OAIPMH} ))
         
 class BatchingResumptionTestCase(unittest.TestCase):
     def setUp(self):
@@ -158,7 +159,8 @@ class BatchingResumptionTestCase(unittest.TestCase):
         self.assert_(oaischema.validate(tree))
         # we should find a resumptionToken element with text
         self.assert_(
-            tree.xpath('//oai:resumptionToken/text()', {'oai': NS_OAIPMH} ))
+            tree.xpath('//oai:resumptionToken/text()', 
+                       namespaces={'oai': NS_OAIPMH} ))
         
 class ClientServerTestCase(unittest.TestCase):
     def setUp(self):
@@ -261,7 +263,7 @@ class ErrorTestCase(unittest.TestCase):
         self.assert_(oaischema.validate(tree))
         result = []
         for e in tree.xpath(
-            '//oai:error', {'oai': NS_OAIPMH}):
+            '//oai:error', namespaces={'oai': NS_OAIPMH}):
             result.append((e.get('code'), e.text))
         result.sort()
         return result
