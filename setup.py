@@ -2,9 +2,9 @@ from setuptools import setup, find_packages
 
 setup(
     name='pyoai',
-    version='2.2',
+    version='2.3',
     author='Infrae',
-    author_email='faassen@infrae.com',
+    author_email='jasper@infrae.com',
     url='http://www.infrae.com/download/oaipmh',
     description="""\
 The oaipmh module is a Python implementation of an "Open Archives
