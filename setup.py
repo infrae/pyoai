@@ -26,7 +26,7 @@ as well as construct your own OAI-PMH data provider.
     
     packages=find_packages('src'),
     package_dir = {'': 'src'},
-    zip_safe=True,
+    zip_safe=False,
     license='BSD',
     keywords='OAI-PMH xml archive',
     install_requires=['lxml'],
