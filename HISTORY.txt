@@ -2,8 +2,27 @@
 oaipmh changelog
 ================
 
-trunk (unreleased)
-==================
+2.3 (unreleased)
+================
+
+Changes
+-------
+
+* Use buildout to create testrunner and environment as opposed to
+  ``test.py`` script. 
+
+  Install buildout by:
+
+    $ python bootstrap.py
+    $ bin/buildout
+
+  Run the tests by doing:
+ 
+    $ bin/test
+
+  To get a python interpreter with the ``oaipmh`` library importable::
+
+    $ bin/devpython
 
 2.2.1 (2008-04-04)
 ================
