@@ -2,11 +2,15 @@
 oaipmh changelog
 ================
 
-2.3 (unreleased)
+2.3 (2009-04-23)
 ================
 
 Changes
 -------
+
+* Fixed bug and added tests for handling invalid dateTime formats, 
+  the server will now respond with a BadArgument (XML) error instead
+  of a python traceback.
 
 * Use buildout to create testrunner and environment as opposed to
   ``test.py`` script. 

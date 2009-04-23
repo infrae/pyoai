@@ -55,6 +55,7 @@ class XMLTreeServerTestCase(unittest.TestCase):
             metadataPrefix='oai_dc')
         self.assert_(oaischema.validate(tree))
 
+
     def test_listSets(self):
         tree = self._server.listSets()
         self.assert_(oaischema.validate(tree))
@@ -252,6 +253,23 @@ class ErrorTestCase(unittest.TestCase):
             [('idDoesNotExist',
               'Id does not exist: 500')],
             xml)
+
+    def test_badDateArgument(self):
+        xml = self._server.handleRequest({'verb': 'ListRecords',
+                                          'metadataPrefix': 'oai_dc',
+                                          'from': 'junk'})
+        self.assertErrors(
+            [('badArgument',
+              "The value 'junk' of the argument 'from' is not valid.")],
+            xml)
+        xml = self._server.handleRequest({'verb': 'ListRecords',
+                                          'metadataPrefix': 'oai_dc',
+                                          'until': 'junk'})
+        self.assertErrors(
+            [('badArgument',
+              "The value 'junk' of the argument 'until' is not valid.")],
+            xml)
+
     
     def assertErrors(self, errors, xml):
         self.assertEquals(errors, self.findErrors(xml))

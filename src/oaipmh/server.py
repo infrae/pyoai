@@ -5,7 +5,7 @@ from urllib import quote, unquote, urlencode
 import sys, cgi
 
 from oaipmh import common, metadata, validation, error
-from oaipmh.datestamp import datestamp_to_datetime, datetime_to_datestamp
+from oaipmh.datestamp import datestamp_to_datetime, datetime_to_datestamp, DatestampError
 
 NS_OAIPMH = 'http://www.openarchives.org/OAI/2.0/'
 NS_XSI = 'http://www.w3.org/2001/XMLSchema-instance'
@@ -264,11 +264,22 @@ class ServerBase(common.ResumptionOAIPMH):
             from_ = request_kw.get('from')
             if from_ is not None:
                 # rename to from_ for internal use
-                request_kw['from_'] = datestamp_to_datetime(from_)
+                try:
+                    request_kw['from_'] = datestamp_to_datetime(from_)
+                except DatestampError, err:
+                    raise error.BadArgumentError(
+                        "The value '%s' of the argument "
+                        "'%s' is not valid." %(from_, 'from'))
                 del request_kw['from']
             until = request_kw.get('until')
             if until is not None:
-                request_kw['until'] = datestamp_to_datetime(until)
+                try:
+                    request_kw['until'] = datestamp_to_datetime(until)
+                except DatestampError, err:
+                    raise error.BadArgumentError(
+                        "The value '%s' of the argument "
+                        "'%s' is not valid." %(until, 'until'))
+                    
             # now validate parameters
             try:
                 validation.validateResumptionArguments(verb, request_kw)
