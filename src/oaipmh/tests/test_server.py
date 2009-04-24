@@ -270,6 +270,18 @@ class ErrorTestCase(unittest.TestCase):
               "The value 'junk' of the argument 'until' is not valid.")],
             xml)
 
+
+    def testDifferentGranularities(self):
+        xml = self._server.handleRequest({'verb': 'ListRecords',
+                                          'metadataPrefix': 'oai_dc',
+                                          'from': '2006-01-01',
+                                          'until': '2008-01-01T00:00:00Z'})
+        self.assertErrors(
+            [('badArgument',
+              "The request has different granularities for the from"
+              " and until parameters")],
+            xml)
+        
     
     def assertErrors(self, errors, xml):
         self.assertEquals(errors, self.findErrors(xml))
