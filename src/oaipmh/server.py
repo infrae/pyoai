@@ -72,6 +72,10 @@ class XMLTreeServer(object):
             for compression in compressions:
                 e_compression = SubElement(e_identify, nsoai('compression'))
                 e_compression.text = compression
+
+        for description in identify.descriptions():
+            e_description = SubElement(e_identify, nsoai('description'))
+            e_description.append(etree.fromstring(description))
         return envelope
 
     def listMetadataFormats(self, **kw):

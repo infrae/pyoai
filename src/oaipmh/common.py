@@ -1,3 +1,5 @@
+import pkg_resources
+
 from oaipmh import error
 
 class Header(object):
@@ -32,10 +34,11 @@ class Metadata(object):
         return self._map[name]
 
     __getitem__ = getField
-    
+
 class Identify(object):
     def __init__(self, repositoryName, baseURL, protocolVersion, adminEmails,
-                 earliestDatestamp, deletedRecord, granularity, compression):
+                 earliestDatestamp, deletedRecord, granularity, compression,
+                 toolkit_description=True):
         self._repositoryName = repositoryName
         self._baseURL = baseURL
         self._protocolVersion = protocolVersion
@@ -44,7 +47,25 @@ class Identify(object):
         self._deletedRecord = deletedRecord
         self._granularity = granularity
         self._compression = compression
-        # XXX description
+        self._descriptions = []
+        
+        if toolkit_description:
+            req = pkg_resources.Requirement.parse('pyoai')
+            egg = pkg_resources.working_set.find(req)
+            if egg:
+                version = '<version>%s</version>' % egg.version
+            else:
+                version = ''
+            self.add_description(
+                '<toolkit xsi:schemaLocation='
+                '"http://oai.dlib.vt.edu/OAI/metadata/toolkit '
+                'http://oai.dlib.vt.edu/OAI/metadata/toolkit.xsd" '
+                'xmlns="http://oai.dlib.vt.edu/OAI/metadata/toolkit" '
+                'xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">'
+                '<title>pyoai</title>'
+                '%s'
+                '<URL>http://infrae.com/products/oaipack</URL>'
+                '</toolkit>' % version)
         
     def repositoryName(self):
         return self._repositoryName
@@ -69,6 +90,12 @@ class Identify(object):
 
     def compression(self):
         return self._compression
+
+    def add_description(self, xml_string):
+        self._descriptions.append(xml_string)
+
+    def descriptions(self):
+        return self._descriptions
     
 def ResumptionTokenSpec(dict):
     dict = dict.copy()
