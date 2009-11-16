@@ -278,7 +278,8 @@ class ServerBase(common.ResumptionOAIPMH):
             until = request_kw.get('until')
             if until is not None:
                 try:
-                    request_kw['until'] = datestamp_to_datetime(until)
+                    request_kw['until'] = datestamp_to_datetime(until,
+                                                                inclusive=True)
                 except DatestampError, err:
                     raise error.BadArgumentError(
                         "The value '%s' of the argument "

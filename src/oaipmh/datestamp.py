@@ -15,13 +15,13 @@ def date_to_datestamp(d, day_granularity=False):
     return datetime_to_datestamp( 	 
         datetime.datetime.combine(d, datetime.time(0)), day_granularity)
 
-def datestamp_to_datetime(datestamp):
+def datestamp_to_datetime(datestamp, inclusive=False):
     try:
-        return _datestamp_to_datetime(datestamp)
+        return _datestamp_to_datetime(datestamp, inclusive)
     except ValueError:
         raise DatestampError(datestamp)
     
-def _datestamp_to_datetime(datestamp):
+def _datestamp_to_datetime(datestamp, inclusive=False):
     splitted = datestamp.split('T')
     if len(splitted) == 2:
         d, t = splitted
@@ -31,7 +31,11 @@ def _datestamp_to_datetime(datestamp):
         t = t[:-1]
     else:
         d = splitted[0]
-        t = '00:00:00'
+        if inclusive:
+            # used when a date was specified as ?until parameter
+            t = '23:59:59'
+        else:
+            t = '00:00:00'
     YYYY, MM, DD = d.split('-')
     hh, mm, ss = t.split(':') # this assumes there's no timezone info
     return datetime.datetime(
