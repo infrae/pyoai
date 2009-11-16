@@ -35,7 +35,16 @@ class DatestampTestCase(TestCase):
             datestamp_to_datetime('foo')
         except DatestampError, e:
             self.assertEquals('foo', e.datestamp)
-            
+
+    def test_strict_datestamp_to_datetime_inclusive(self):
+        # passing inclusive=True to datestamp_to_datetime
+        # should default the time to 23:59:59 instead of 00:00:00
+        # when only a date is supplied
+
+        self.assertEquals(datetime(2009, 11, 16, 23, 59, 59),
+                          datestamp_to_datetime('2009-11-16',
+                                                inclusive=True))
+        
     def test_tolerant_datestamp_to_datetime(self):
         f = tolerant_datestamp_to_datetime
         self.assertEquals(
