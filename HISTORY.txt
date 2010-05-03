@@ -2,7 +2,17 @@
 oaipmh changelog
 ================
 
-2.4.1 (unreleased)
+2.4.2 (2010-05-03)
+==================
+
+Changes
+-------
+
+  * OAI_DC and DC namespace declarations should not be declared on the document
+    root, but on the child of the metadata element. According to the OAI spec
+
+    
+2.4.1 (2009-11-16)
 ==================
 
 Changes
