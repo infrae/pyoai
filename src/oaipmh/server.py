@@ -14,9 +14,6 @@ NS_DC = "http://purl.org/dc/elements/1.1/"
 
 NSMAP = {
     None: NS_OAIPMH,
-    'xsi': NS_XSI,
-    'oai_dc': NS_OAIDC,
-    'dc': NS_DC
     }
 
 class XMLTreeServer(object):
@@ -465,7 +462,8 @@ def decodeResumptionToken(token):
     return result, cursor
     
 def oai_dc_writer(element, metadata):
-    e_dc = SubElement(element, nsoaidc('dc'))
+    e_dc = SubElement(element, nsoaidc('dc'),
+                      nsmap={'oai_dc': NS_OAIDC, 'dc': NS_DC, 'xsi': NS_XSI})
     e_dc.set('{%s}schemaLocation' % NS_XSI,
              '%s http://www.openarchives.org/OAI/2.0/oai_dc.xsd' % NS_DC)
     map = metadata.getMap()
