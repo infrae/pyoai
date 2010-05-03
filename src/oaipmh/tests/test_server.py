@@ -55,10 +55,32 @@ class XMLTreeServerTestCase(unittest.TestCase):
             metadataPrefix='oai_dc')
         self.assert_(oaischema.validate(tree))
 
-
     def test_listSets(self):
         tree = self._server.listSets()
         self.assert_(oaischema.validate(tree))
+
+    def test_namespaceDeclarations(self):
+        # according to the spec, all namespace used in the metadata
+        # element should be declared on the metadata element,
+        # and not on root or ancestor elements (big sigh..)
+        # this works, except for the xsi namespace which is allready declared
+        # on the root element, which means lxml will not declare it again on
+        # the metadata element
+
+        tree = self._server.getRecord(
+            metadataPrefix='oai_dc', identifier='hdl:1765/315')
+        # ugly xml manipulation, this is probably why the requirement is in
+        # the spec (yuck!)
+        xml = etree.tostring(tree)
+        xml = xml.split('<metadata>')[-1].split('</metadata>')[0]
+        first_el = xml.split('>')[0]
+        self.assertTrue(first_el.startswith('<oai_dc:dc'))
+        self.assertTrue(
+            'xmlns:oai_dc="http://www.openarchives.org/OAI/2.0/oai_dc/"'
+            in first_el) 
+        self.assertTrue(
+            'xmlns:dc="http://purl.org/dc/elements/1.1/"'
+            in first_el) 
         
 class ServerTestCase(unittest.TestCase):
     """
@@ -203,7 +225,8 @@ class ClientServerTestCase(unittest.TestCase):
         self.assertRaises(error.NoRecordsMatchError,
                           self._client.listIdentifiers,
                           metadataPrefix='oai_dc', from_=datetime(2003, 1, 1),
-                          until=datetime(2003, 7, 1))
+                          until=datetime(2003, 7, 1))        
+        
         
 class ErrorTestCase(unittest.TestCase):
     def setUp(self):
@@ -372,7 +395,7 @@ class NsMapTestCase(unittest.TestCase):
             'http://www.cow.com',
             tree.getroot().nsmap['cow'])
         
-    
+        
 def test_suite():
     return unittest.TestSuite([
         unittest.makeSuite(XMLTreeServerTestCase),
