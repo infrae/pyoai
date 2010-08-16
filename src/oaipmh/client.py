@@ -257,8 +257,10 @@ class BaseClient(common.OAIPMH):
         for set_node in set_nodes:
             e = etree.XPathEvaluator(set_node, 
                                      namespaces=namespaces).evaluate
-            setSpec = e('string(oai:setSpec/text())')
-            setName = e('string(oai:setName/text())')
+            # make sure we get back unicode strings instead
+            # of lxml.etree._ElementUnicodeResult objects.
+            setSpec = unicode(e('string(oai:setSpec/text())'))
+            setName = unicode(e('string(oai:setName/text())'))
             # XXX setDescription nodes
             sets.append((setSpec, setName, None))
         return sets, token
