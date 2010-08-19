@@ -2,11 +2,18 @@
 oaipmh changelog
 ================
 
-2.5dev   (unreleased)
-=====================
+Changes
+-------
+
+2.4.3 (2010-08-19)
+==================
 
 Changes
 -------
+
+  * Convert lxml.etree._ElementUnicodeResult and ElementStringResult
+    to normal string and unicode objects, to prevent errors when these
+    objects get pickled. (lp #617439)
 
 2.4.2 (2010-05-03)
 ==================
