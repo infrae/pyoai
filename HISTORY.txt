@@ -1,6 +1,11 @@
 Changelog
 =========
 
+2.4.4 (unreleased)
+~~~~~~~~~~~~~~~~~~
+
+  * Migrated code from Subversion to Mercurial
+
 2.4.3 (2010-08-19)
 ~~~~~~~~~~~~~~~~~~
 
