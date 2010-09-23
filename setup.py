@@ -19,7 +19,7 @@ The protocol is described here:
 
 http://www.openarchives.org/OAI/openarchivesprotocol.html
 """,
-    long_description=(open(join(dirname(__file__), 'README.txt')).read()+
+    long_description=(open(join(dirname(__file__), 'README.rst')).read()+
         '\n\n'+
         open(join(dirname(__file__), 'HISTORY.txt')).read()),
     packages=find_packages('src'),
