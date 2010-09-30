@@ -3,9 +3,9 @@ from os.path import join, dirname
 
 setup(
     name='pyoai',
-    version='2.4.3',
+    version='2.4.4',
     author='Infrae',
-    author_email='jasper@infrae.com',
+    author_email='info@infrae.com',
     url='http://www.infrae.com/download/oaipmh',
     classifiers=["Development Status :: 4 - Beta",
                  "Programming Language :: Python",
