@@ -97,6 +97,9 @@ class BaseClient(common.OAIPMH):
             xml = xml.encode('UTF-8')
         return etree.XML(xml)
 
+    # implementation of the various methods, delegated here by
+    # handleVerb method
+
     def GetRecord_impl(self, args, tree):
         records, token = self.buildRecords(
             args['metadataPrefix'],
@@ -107,8 +110,8 @@ class BaseClient(common.OAIPMH):
         assert token is None
         return records[0]
 
-    # implementation of the various methods, delegated here by
-    # handleVerb method
+    def GetMetadata_impl(self, args, tree):
+        return tree
     
     def Identify_impl(self, args, tree):
         namespaces = self.getNamespaces()

@@ -42,7 +42,15 @@ class XMLTreeServer(object):
         if not header.isDeleted():
             self._outputMetadata(e_record, kw['metadataPrefix'], metadata)
         return envelope
-    
+
+    def getMetadata(self, **kw):
+        """unofficial verb, works same as getRecord, but returns
+        the first element below the oai:metadata element"""
+        envelope = self.getRecord(**kw)
+        metadata = envelope.xpath(
+            '//oai:metadata/node()[1]', namespaces={'oai': NS_OAIPMH})
+        return metadata[0]
+        
     def identify(self):
         envelope, e_identify = self._outputEnvelope(verb='Identify')
         identify = self._server.identify()
@@ -259,7 +267,8 @@ class ServerBase(common.ResumptionOAIPMH):
                 raise error.BadVerbError,\
                       "Required verb argument not found."
             if verb not in ['GetRecord', 'Identify', 'ListIdentifiers',
-                            'ListMetadataFormats', 'ListRecords', 'ListSets']:
+                            'GetMetadata', 'ListMetadataFormats',
+                            'ListRecords', 'ListSets']:
                 raise error.BadVerbError, "Illegal verb: %s" % verb
             # replace from and until arguments if necessary
             from_ = request_kw.get('from')

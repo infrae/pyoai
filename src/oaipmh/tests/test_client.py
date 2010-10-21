@@ -24,6 +24,13 @@ class ClientTestCase(TestCase):
             header.setSpec())
         self.assert_(not header.isDeleted())
         
+    def test_getMetadata(self):
+        metadata = fakeclient.getMetadata(
+            metadataPrefix='oai_dc', identifier='hdl:1765/315')
+        self.assertEquals(metadata.tag,
+                          '{http://www.openarchives.org/OAI/2.0/oai_dc/}dc')
+
+        
     def test_identify(self):
         identify = fakeclient.identify()
         self.assertEquals(

@@ -4,7 +4,9 @@ Changelog
 2.4.5 (unreleased)
 ~~~~~~~~~~~~~~~~~~
 
-- Nothing changed yet.
+- Added unofficial GetMetadata verb in server and client. GetMetadata is 
+  identical to GetRecord, but only returns the first element below the 
+  oai:metadata element, it does not return the oai enveloppe.
 
 
 2.4.4 (2010-09-30)

@@ -33,6 +33,10 @@ class ValidationSpec(object):
         'identifier':'required',
         'metadataPrefix':'required'
         }
+    GetMetadata = {
+        'identifier':'required',
+        'metadataPrefix':'required'
+        }
     
     Identify = {
         }

@@ -34,6 +34,12 @@ class XMLTreeServerTestCase(unittest.TestCase):
         tree = self._server.getRecord(
             metadataPrefix='oai_dc', identifier='hdl:1765/315')
         self.assert_(oaischema.validate(tree))
+
+    def test_getMetadata(self):
+        tree = self._server.getMetadata(
+            metadataPrefix='oai_dc', identifier='hdl:1765/315')
+        self.assertEquals(tree.tag,
+                          '{http://www.openarchives.org/OAI/2.0/oai_dc/}dc')
         
     def test_identify(self):
         tree = self._server.identify()

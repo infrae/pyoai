@@ -129,6 +129,10 @@ class OAIPMH(object):
     getRecord = OAIMethod(
         'GetRecord',
         )
+
+    getMetadata = OAIMethod(
+        'GetMetadata',
+        )
     
     identify = OAIMethod(
         'Identify',
@@ -167,7 +171,11 @@ class ResumptionOAIPMH(object):
     getRecord = OAIMethod(
         'GetRecord',
         )
-    
+
+    getMetadata = OAIMethod(
+        'GetMetadata',
+        )
+
     identify = OAIMethod(
         'Identify',
         )
