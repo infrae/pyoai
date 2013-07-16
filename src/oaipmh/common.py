@@ -3,17 +3,21 @@ import pkg_resources
 from oaipmh import error
 
 class Header(object):
-    def __init__(self, identifier, datestamp, setspec, deleted):
+    def __init__(self, element, identifier, datestamp, setspec, deleted):
+        self._element = element
         # force identifier to be a string, it might be 
         # an lxml.etree._ElementStringResult...
         self._identifier = str(identifier)
         self._datestamp = datestamp
         self._setspec = setspec
         self._deleted = deleted
-        
+
+    def element(self):
+        return self._element
+
     def identifier(self):
         return self._identifier
-    
+
     def datestamp(self):
         return self._datestamp
 
@@ -24,12 +28,16 @@ class Header(object):
         return self._deleted
 
 class Metadata(object):
-    def __init__(self, map):
+    def __init__(self, element, map):
+        self._element = element
         self._map = map
+
+    def element(self):
+        return self._element
 
     def getMap(self):
         return self._map
-    
+
     def getField(self, name):
         return self._map[name]
 
