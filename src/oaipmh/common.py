@@ -6,7 +6,10 @@ class Header(object):
     def __init__(self, identifier, datestamp, setspec, deleted):
         # force identifier to be a string, it might be 
         # an lxml.etree._ElementStringResult...
-        self._identifier = str(identifier)
+        try:
+            self._identifier = str(identifier)
+        except UnicodeEncodeError:
+            self._identifier = unicode(identifier)
         self._datestamp = datestamp
         self._setspec = setspec
         self._deleted = deleted
