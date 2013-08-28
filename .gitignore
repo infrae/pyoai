@@ -1,0 +1,6 @@
+*.pyc
+.installed.cfg
+bin
+develop-eggs
+parts
+src/pyoai.egg-info
