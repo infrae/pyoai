@@ -80,7 +80,7 @@ class MetadataReader(object):
             else:
                 raise Error, "Unknown field type: %s" % field_type
             map[field_name] = value
-        return common.Metadata(map)
+        return common.Metadata(element, map)
 
 oai_dc_reader = MetadataReader(
     fields={

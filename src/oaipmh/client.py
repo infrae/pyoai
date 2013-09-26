@@ -326,7 +326,7 @@ def buildHeader(header_node, namespaces):
         str(e('string(oai:datestamp/text())')))
     setspec = [str(s) for s in e('oai:setSpec/text()')]
     deleted = e("@status = 'deleted'") 
-    return common.Header(identifier, datestamp, setspec, deleted)
+    return common.Header(header_node, identifier, datestamp, setspec, deleted)
 
 def ResumptionListGenerator(firstBatch, nextBatch):
     result, token = firstBatch()
