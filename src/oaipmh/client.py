@@ -8,6 +8,7 @@ from StringIO import StringIO
 from types import SliceType
 from lxml import etree
 import time
+import codecs
 
 from oaipmh import common, metadata, validation, error
 from oaipmh.datestamp import datestamp_to_datetime, datetime_to_datestamp
@@ -299,24 +300,30 @@ class BaseClient(common.OAIPMH):
     
 class Client(BaseClient):
     def __init__(
-            self, base_url, metadata_registry=None, credentials=None):
+            self, base_url, metadata_registry=None, credentials=None, local_file=False):
         BaseClient.__init__(self, metadata_registry)
         self._base_url = base_url
+        self._local_file = local_file
         if credentials is not None:
             self._credentials = base64.encodestring('%s:%s' % credentials)
         else:
             self._credentials = None
             
     def makeRequest(self, **kw):
-        """Actually retrieve XML from the server.
+        """Either load a local XML file or actually retrieve XML from a server.
         """
-        # XXX include From header?
-        headers = {'User-Agent': 'pyoai'}
-        if self._credentials is not None:
-            headers['Authorization'] = 'Basic ' + self._credentials.strip()
-        request = urllib2.Request(
-            self._base_url, data=urlencode(kw), headers=headers)
-        return retrieveFromUrlWaiting(request)
+        if self._local_file:
+            with codecs.open(self._base_url, 'r', 'utf-8') as xmlfile:
+                text = xmlfile.read()
+            return text.encode('ascii', 'replace')
+        else:
+            # XXX include From header?
+            headers = {'User-Agent': 'pyoai'}
+            if self._credentials is not None:
+                headers['Authorization'] = 'Basic ' + self._credentials.strip()
+            request = urllib2.Request(
+                self._base_url, data=urlencode(kw), headers=headers)
+            return retrieveFromUrlWaiting(request)
 
 def buildHeader(header_node, namespaces):
     e = etree.XPathEvaluator(header_node, 
@@ -326,7 +333,7 @@ def buildHeader(header_node, namespaces):
         str(e('string(oai:datestamp/text())')))
     setspec = [str(s) for s in e('oai:setSpec/text()')]
     deleted = e("@status = 'deleted'") 
-    return common.Header(identifier, datestamp, setspec, deleted)
+    return common.Header(header_node, identifier, datestamp, setspec, deleted)
 
 def ResumptionListGenerator(firstBatch, nextBatch):
     result, token = firstBatch()
