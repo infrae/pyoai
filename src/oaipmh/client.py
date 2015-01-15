@@ -38,7 +38,7 @@ class BaseClient(common.OAIPMH):
             self._day_granularity= False
         else:
             raise Error, "Non-standard granularity on server: %s" % granularity
-            
+
     def handleVerb(self, verb, kw):
         # validate kw first
         validation.validateArguments(verb, kw)
@@ -51,7 +51,7 @@ class BaseClient(common.OAIPMH):
         if 'from_' in kw:
             # always remove it from the kw, no matter whether it be None or not
             del kw['from_']
-    
+
         until = kw.get('until')
         if until is not None:
             kw['until'] = datetime_to_datestamp(until,
@@ -59,11 +59,11 @@ class BaseClient(common.OAIPMH):
         elif 'until' in kw:
             # until is None but is explicitly in kw, remove it
             del kw['until']
-        
+
         # now call underlying implementation
         method_name = verb + '_impl'
         return getattr(self, method_name)(
-            kw, self.makeRequestErrorHandling(verb=verb, **kw))    
+            kw, self.makeRequestErrorHandling(verb=verb, **kw))
 
     def getNamespaces(self):
         """Get OAI namespaces.
@@ -77,23 +77,23 @@ class BaseClient(common.OAIPMH):
         """
         return self._metadata_registry
 
-    def ignoreBadCharacters(self, true_or_false): 	 
-        """Set to ignore bad characters in UTF-8 input. 	 
-        This is a hack to get around well-formedness errors of 	 
-        input sources which *should* be in UTF-8 but for some reason 	 
-        aren't completely. 	 
-        """ 	 
-        self._ignore_bad_character_hack = true_or_false 	 
-
-    def parse(self, xml): 	 
-        """Parse the XML to a lxml tree. 	 
+    def ignoreBadCharacters(self, true_or_false):
+        """Set to ignore bad characters in UTF-8 input.
+        This is a hack to get around well-formedness errors of
+        input sources which *should* be in UTF-8 but for some reason
+        aren't completely.
         """
-        # XXX this is only safe for UTF-8 encoded content, 	 
+        self._ignore_bad_character_hack = true_or_false
+
+    def parse(self, xml):
+        """Parse the XML to a lxml tree.
+        """
+        # XXX this is only safe for UTF-8 encoded content,
         # and we're basically hacking around non-wellformedness anyway,
         # but oh well
-        if self._ignore_bad_character_hack: 	 
-            xml = unicode(xml, 'UTF-8', 'replace') 	 
-            # also get rid of character code 12 	 
+        if self._ignore_bad_character_hack:
+            xml = unicode(xml, 'UTF-8', 'replace')
+            # also get rid of character code 12
             xml = xml.replace(chr(12), '?')
             xml = xml.encode('UTF-8')
         return etree.XML(xml)
@@ -113,7 +113,7 @@ class BaseClient(common.OAIPMH):
 
     def GetMetadata_impl(self, args, tree):
         return tree
-    
+
     def Identify_impl(self, args, tree):
         namespaces = self.getNamespaces()
         evaluator = etree.XPathEvaluator(tree, namespaces=namespaces)
@@ -151,14 +151,14 @@ class BaseClient(common.OAIPMH):
 
     def ListMetadataFormats_impl(self, args, tree):
         namespaces = self.getNamespaces()
-        evaluator = etree.XPathEvaluator(tree, 
+        evaluator = etree.XPathEvaluator(tree,
                                          namespaces=namespaces)
 
         metadataFormat_nodes = evaluator.evaluate(
             '/oai:OAI-PMH/oai:ListMetadataFormats/oai:metadataFormat')
         metadataFormats = []
         for metadataFormat_node in metadataFormat_nodes:
-            e = etree.XPathEvaluator(metadataFormat_node, 
+            e = etree.XPathEvaluator(metadataFormat_node,
                                      namespaces=namespaces).evaluate
             metadataPrefix = e('string(oai:metadataPrefix/text())')
             schema = e('string(oai:schema/text())')
@@ -197,7 +197,7 @@ class BaseClient(common.OAIPMH):
         return ResumptionListGenerator(firstBatch, nextBatch)
 
     # various helper methods
-    
+
     def buildRecords(self,
                      metadata_prefix, namespaces, metadata_registry, tree):
         # first find resumption token if available
@@ -211,7 +211,7 @@ class BaseClient(common.OAIPMH):
             '/oai:OAI-PMH/*/oai:record')
         result = []
         for record_node in record_nodes:
-            record_evaluator = etree.XPathEvaluator(record_node, 
+            record_evaluator = etree.XPathEvaluator(record_node,
                                                     namespaces=namespaces)
             e = record_evaluator.evaluate
             # find header node
@@ -232,15 +232,16 @@ class BaseClient(common.OAIPMH):
         return result, token
 
     def buildIdentifiers(self, namespaces, tree):
-        evaluator = etree.XPathEvaluator(tree, 
+        evaluator = etree.XPathEvaluator(tree,
                                          namespaces=namespaces)
         # first find resumption token is available
         token = evaluator.evaluate(
-            'string(/oai:OAI-PMH/oai:ListIdentifiers/oai:resumptionToken/text())')
+            'string(/oai:OAI-PMH/*/oai:resumptionToken/text())')
+            #'string(/oai:OAI-PMH/oai:ListIdentifiers/oai:resumptionToken/text())')
         if token.strip() == '':
-            token = None    
+            token = None
         header_nodes = evaluator.evaluate(
-                '/oai:OAI-PMH/oai:ListIdentifiers/oai:header')            
+                '/oai:OAI-PMH/oai:ListIdentifiers/oai:header')
         result = []
         for header_node in header_nodes:
             header = buildHeader(header_node, namespaces)
@@ -248,18 +249,18 @@ class BaseClient(common.OAIPMH):
         return result, token
 
     def buildSets(self, namespaces, tree):
-        evaluator = etree.XPathEvaluator(tree, 
+        evaluator = etree.XPathEvaluator(tree,
                                          namespaces=namespaces)
         # first find resumption token if available
         token = evaluator.evaluate(
             'string(/oai:OAI-PMH/oai:ListSets/oai:resumptionToken/text())')
         if token.strip() == '':
-            token = None  
+            token = None
         set_nodes = evaluator.evaluate(
             '/oai:OAI-PMH/oai:ListSets/oai:set')
         sets = []
         for set_node in set_nodes:
-            e = etree.XPathEvaluator(set_node, 
+            e = etree.XPathEvaluator(set_node,
                                      namespaces=namespaces).evaluate
             # make sure we get back unicode strings instead
             # of lxml.etree._ElementUnicodeResult objects.
@@ -294,10 +295,10 @@ class BaseClient(common.OAIPMH):
                 # find exception in error module and raise with msg
                 raise getattr(error, code[0].upper() + code[1:] + 'Error'), msg
         return tree
-    
+
     def makeRequest(self, **kw):
         raise NotImplementedError
-    
+
 class Client(BaseClient):
     def __init__(
             self, base_url, metadata_registry=None, credentials=None, local_file=False):
@@ -308,7 +309,7 @@ class Client(BaseClient):
             self._credentials = base64.encodestring('%s:%s' % credentials)
         else:
             self._credentials = None
-            
+
     def makeRequest(self, **kw):
         """Either load a local XML file or actually retrieve XML from a server.
         """
@@ -326,13 +327,13 @@ class Client(BaseClient):
             return retrieveFromUrlWaiting(request)
 
 def buildHeader(header_node, namespaces):
-    e = etree.XPathEvaluator(header_node, 
+    e = etree.XPathEvaluator(header_node,
                             namespaces=namespaces).evaluate
     identifier = e('string(oai:identifier/text())')
     datestamp = datestamp_to_datetime(
         str(e('string(oai:datestamp/text())')))
     setspec = [str(s) for s in e('oai:setSpec/text()')]
-    deleted = e("@status = 'deleted'") 
+    deleted = e("@status = 'deleted'")
     return common.Header(header_node, identifier, datestamp, setspec, deleted)
 
 def ResumptionListGenerator(firstBatch, nextBatch):
@@ -376,6 +377,6 @@ class ServerClient(BaseClient):
     def __init__(self, server, metadata_registry=None):
         BaseClient.__init__(self, metadata_registry)
         self._server = server
-        
+
     def makeRequest(self, **kw):
         return self._server.handleRequest(kw)
