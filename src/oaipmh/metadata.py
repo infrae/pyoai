@@ -2,6 +2,7 @@ from lxml import etree
 from lxml.etree import SubElement
 from oaipmh import common
 
+
 class MetadataRegistry(object):
     """A registry that contains readers and writers of metadata.
 
@@ -14,7 +15,7 @@ class MetadataRegistry(object):
     def __init__(self):
         self._readers = {}
         self._writers = {}
-        
+
     def registerReader(self, metadata_prefix, reader):
         self._readers[metadata_prefix] = reader
 
@@ -23,10 +24,10 @@ class MetadataRegistry(object):
 
     def hasReader(self, metadata_prefix):
         return metadata_prefix in self._readers
-    
+
     def hasWriter(self, metadata_prefix):
         return metadata_prefix in self._writers
-    
+
     def readMetadata(self, metadata_prefix, element):
         """Turn XML into metadata object.
 
@@ -38,7 +39,7 @@ class MetadataRegistry(object):
 
     def writeMetadata(self, metadata_prefix, element, metadata):
         """Write metadata as XML.
-        
+
         element - ElementTree element to write under
         metadata - metadata object to write
         """
@@ -46,12 +47,15 @@ class MetadataRegistry(object):
 
 global_metadata_registry = MetadataRegistry()
 
+
 class Error(Exception):
     pass
+
 
 class MetadataReader(object):
     """A default implementation of a reader based on fields.
     """
+
     def __init__(self, fields, namespaces=None):
         self._fields = fields
         self._namespaces = namespaces or {}
@@ -59,9 +63,9 @@ class MetadataReader(object):
     def __call__(self, element):
         map = {}
         # create XPathEvaluator for this element
-        xpath_evaluator = etree.XPathEvaluator(element, 
+        xpath_evaluator = etree.XPathEvaluator(element,
                                                namespaces=self._namespaces)
-        
+
         e = xpath_evaluator.evaluate
         # now extra field info according to xpath expr
         for field_name, (field_type, expr) in self._fields.items():
@@ -84,26 +88,23 @@ class MetadataReader(object):
 
 oai_dc_reader = MetadataReader(
     fields={
-    'title':       ('textList', 'oai_dc:dc/dc:title/text()'),
-    'creator':     ('textList', 'oai_dc:dc/dc:creator/text()'),
-    'subject':     ('textList', 'oai_dc:dc/dc:subject/text()'),
-    'description': ('textList', 'oai_dc:dc/dc:description/text()'),
-    'publisher':   ('textList', 'oai_dc:dc/dc:publisher/text()'),
-    'contributor': ('textList', 'oai_dc:dc/dc:contributor/text()'),
-    'date':        ('textList', 'oai_dc:dc/dc:date/text()'),
-    'type':        ('textList', 'oai_dc:dc/dc:type/text()'),
-    'format':      ('textList', 'oai_dc:dc/dc:format/text()'),
-    'identifier':  ('textList', 'oai_dc:dc/dc:identifier/text()'),
-    'source':      ('textList', 'oai_dc:dc/dc:source/text()'),
-    'language':    ('textList', 'oai_dc:dc/dc:language/text()'),
-    'relation':    ('textList', 'oai_dc:dc/dc:relation/text()'),
-    'coverage':    ('textList', 'oai_dc:dc/dc:coverage/text()'),
-    'rights':      ('textList', 'oai_dc:dc/dc:rights/text()')
+        'title':       ('textList', 'oai_dc:dc/dc:title/text()'),
+        'creator':     ('textList', 'oai_dc:dc/dc:creator/text()'),
+        'subject':     ('textList', 'oai_dc:dc/dc:subject/text()'),
+        'description': ('textList', 'oai_dc:dc/dc:description/text()'),
+        'publisher':   ('textList', 'oai_dc:dc/dc:publisher/text()'),
+        'contributor': ('textList', 'oai_dc:dc/dc:contributor/text()'),
+        'date':        ('textList', 'oai_dc:dc/dc:date/text()'),
+        'type':        ('textList', 'oai_dc:dc/dc:type/text()'),
+        'format':      ('textList', 'oai_dc:dc/dc:format/text()'),
+        'identifier':  ('textList', 'oai_dc:dc/dc:identifier/text()'),
+        'source':      ('textList', 'oai_dc:dc/dc:source/text()'),
+        'language':    ('textList', 'oai_dc:dc/dc:language/text()'),
+        'relation':    ('textList', 'oai_dc:dc/dc:relation/text()'),
+        'coverage':    ('textList', 'oai_dc:dc/dc:coverage/text()'),
+        'rights':      ('textList', 'oai_dc:dc/dc:rights/text()')
     },
     namespaces={
-    'oai_dc': 'http://www.openarchives.org/OAI/2.0/oai_dc/',
-    'dc' : 'http://purl.org/dc/elements/1.1/'}
+        'oai_dc': 'http://www.openarchives.org/OAI/2.0/oai_dc/',
+        'dc': 'http://purl.org/dc/elements/1.1/'}
     )
-
-
-    

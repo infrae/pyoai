@@ -13,11 +13,13 @@ import codecs
 from oaipmh import common, metadata, validation, error
 from oaipmh.datestamp import datestamp_to_datetime, datetime_to_datestamp
 
-WAIT_DEFAULT = 120 # two minutes
+WAIT_DEFAULT = 120  # two minutes
 WAIT_MAX = 5
+
 
 class Error(Exception):
     pass
+
 
 class BaseClient(common.OAIPMH):
 
@@ -35,7 +37,7 @@ class BaseClient(common.OAIPMH):
         if granularity == 'YYYY-MM-DD':
             self._day_granularity = True
         elif granularity == 'YYYY-MM-DDThh:mm:ssZ':
-            self._day_granularity= False
+            self._day_granularity = False
         else:
             raise Error, "Non-standard granularity on server: %s" % granularity
 
@@ -141,8 +143,10 @@ class BaseClient(common.OAIPMH):
 
     def ListIdentifiers_impl(self, args, tree):
         namespaces = self.getNamespaces()
+
         def firstBatch():
             return self.buildIdentifiers(namespaces, tree)
+
         def nextBatch(token):
             tree = self.makeRequestErrorHandling(verb='ListIdentifiers',
                                                  resumptionToken=token)
@@ -172,10 +176,12 @@ class BaseClient(common.OAIPMH):
         namespaces = self.getNamespaces()
         metadata_prefix = args['metadataPrefix']
         metadata_registry = self._metadata_registry
+
         def firstBatch():
             return self.buildRecords(
                 metadata_prefix, namespaces,
                 metadata_registry, tree)
+
         def nextBatch(token):
             tree = self.makeRequestErrorHandling(
                 verb='ListRecords',
@@ -187,8 +193,10 @@ class BaseClient(common.OAIPMH):
 
     def ListSets_impl(self, args, tree):
         namespaces = self.getNamespaces()
+
         def firstBatch():
             return self.buildSets(namespaces, tree)
+
         def nextBatch(token):
             tree = self.makeRequestErrorHandling(
                 verb='ListSets',
@@ -291,7 +299,7 @@ class BaseClient(common.OAIPMH):
                                 'noMetadataFormats', 'noSetHierarchy']:
                     raise error.UnknownError,\
                           "Unknown error code from server: %s, message: %s" % (
-                        code, msg)
+                            code, msg)
                 # find exception in error module and raise with msg
                 raise getattr(error, code[0].upper() + code[1:] + 'Error'), msg
         return tree
@@ -299,9 +307,15 @@ class BaseClient(common.OAIPMH):
     def makeRequest(self, **kw):
         raise NotImplementedError
 
+
 class Client(BaseClient):
-    def __init__(
-            self, base_url, metadata_registry=None, credentials=None, local_file=False):
+
+    def __init__(self,
+                 base_url,
+                 metadata_registry=None,
+                 credentials=None,
+                 local_file=False):
+
         BaseClient.__init__(self, metadata_registry)
         self._base_url = base_url
         self._local_file = local_file
@@ -326,15 +340,17 @@ class Client(BaseClient):
                 self._base_url, data=urlencode(kw), headers=headers)
             return retrieveFromUrlWaiting(request)
 
+
 def buildHeader(header_node, namespaces):
     e = etree.XPathEvaluator(header_node,
-                            namespaces=namespaces).evaluate
+                             namespaces=namespaces).evaluate
     identifier = e('string(oai:identifier/text())')
     datestamp = datestamp_to_datetime(
         str(e('string(oai:datestamp/text())')))
     setspec = [str(s) for s in e('oai:setSpec/text()')]
     deleted = e("@status = 'deleted'")
     return common.Header(header_node, identifier, datestamp, setspec, deleted)
+
 
 def ResumptionListGenerator(firstBatch, nextBatch):
     result, token = firstBatch()
@@ -344,6 +360,7 @@ def ResumptionListGenerator(firstBatch, nextBatch):
         if token is None:
             break
         result, token = nextBatch(token)
+
 
 def retrieveFromUrlWaiting(request,
                            wait_max=WAIT_MAX, wait_default=WAIT_DEFAULT):
@@ -372,6 +389,7 @@ def retrieveFromUrlWaiting(request,
     else:
         raise Error, "Waited too often (more than %s times)" % wait_max
     return text
+
 
 class ServerClient(BaseClient):
     def __init__(self, server, metadata_registry=None):

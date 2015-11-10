@@ -9,7 +9,6 @@ if len(sys.argv) == 4:
     SETSPEC = sys.argv[3]
 else:
     SETSPEC = None
-                       
 
 
 registry = MetadataRegistry()
@@ -37,9 +36,3 @@ for num, record in enumerate(records):
 
 print 'Harvested %s records, of which %s were deleted' % (record_count,
                                                           deleted_count)
-    
-
-
-
-
-
