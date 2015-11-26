@@ -74,13 +74,16 @@ class MetadataReader(object):
             elif field_type == 'bytesList':
                 value = [str(item) for item in e(expr)]
             elif field_type == 'text':
-                # make sure we get back unicode strings instead
+                # Make sure we get back unicode strings instead
                 # of lxml.etree._ElementUnicodeResult objects.
                 value = unicode(e(expr))
             elif field_type == 'textList':
-                # make sure we get back unicode strings instead
+                # Make sure we get back unicode strings instead
                 # of lxml.etree._ElementUnicodeResult objects.
                 value = [unicode(v) for v in e(expr)]
+            elif field_type == 'elementList':
+                # Return a list of elements.
+                value = e(expr)
             else:
                 raise Error, "Unknown field type: %s" % field_type
             map[field_name] = value

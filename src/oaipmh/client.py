@@ -228,6 +228,7 @@ class BaseClient(common.OAIPMH):
             header = buildHeader(header_node, namespaces)
             # find metadata node
             metadata_list = e('oai:metadata')
+
             if metadata_list:
                 metadata_node = metadata_list[0]
                 # create metadata
@@ -327,6 +328,7 @@ class Client(BaseClient):
     def makeRequest(self, **kw):
         """Either load a local XML file or actually retrieve XML from a server.
         """
+
         if self._local_file:
             with codecs.open(self._base_url, 'r', 'utf-8') as xmlfile:
                 text = xmlfile.read()
