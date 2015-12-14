@@ -301,10 +301,11 @@ class BaseClient(common.OAIPMH):
 
 class Client(BaseClient):
     def __init__(
-            self, base_url, metadata_registry=None, credentials=None, local_file=False):
+            self, base_url, metadata_registry=None, credentials=None, local_file=False, http_get=False):
         BaseClient.__init__(self, metadata_registry)
         self._base_url = base_url
         self._local_file = local_file
+        self._http_get = http_get
         if credentials is not None:
             self._credentials = base64.encodestring('%s:%s' % credentials)
         else:
@@ -322,8 +323,13 @@ class Client(BaseClient):
             headers = {'User-Agent': 'pyoai'}
             if self._credentials is not None:
                 headers['Authorization'] = 'Basic ' + self._credentials.strip()
-            request = urllib2.Request(
-                self._base_url, data=urlencode(kw), headers=headers)
+            if self._http_get:
+                request_url = '%s?%s' % (self._base_url, urlencode(kw))
+                request = urllib2.Request(request_url, headers=headers)
+            else:
+                request = urllib2.Request(
+                    self._base_url, data=urlencode(kw), headers=headers)
+
             return retrieveFromUrlWaiting(request)
 
 def buildHeader(header_node, namespaces):
