@@ -22,5 +22,7 @@ Thom Hickey for critical discussion of the source code.
 
 Thijs Janssen for a bug report.
 
+Stefan Oderbolz (http_get client patch)
+
 Many thanks go to Henk Ellermann at the library of Erasmus University
 Rotterdam for making this project possible.

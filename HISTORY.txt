@@ -1,8 +1,10 @@
 Changelog
 =========
 
-2.4.5 (unreleased)
+2.4.5 (2015-12-23)
 ~~~~~~~~~~~~~~~~~~
+
+- Added switch in client to force harvesting using HTTP Get method (contributed by Stefan Oderbolz).
 
 - Added unofficial GetMetadata verb in server and client. GetMetadata is 
   identical to GetRecord, but only returns the first element below the 
