@@ -1,17 +1,27 @@
 # Copyright 2003, 2004, 2005 Infrae
 # Released under the BSD license (see LICENSE.txt)
 from __future__ import nested_scopes
-import urllib2
+from __future__ import absolute_import
+
+try:
+    import urllib.request as urllib2
+    from urllib.parse import urlencode
+    from io import StringIO
+except ImportError:
+    import urllib2
+    from urllib import urlencode
+    from StringIO import StringIO
+    from types import SliceType
+
 import base64
-from urllib import urlencode
-from StringIO import StringIO
-from types import SliceType
 from lxml import etree
 import time
 import codecs
 
 from oaipmh import common, metadata, validation, error
 from oaipmh.datestamp import datestamp_to_datetime, datetime_to_datestamp
+import six
+from six.moves import range
 
 WAIT_DEFAULT = 120 # two minutes
 WAIT_MAX = 5
@@ -37,7 +47,7 @@ class BaseClient(common.OAIPMH):
         elif granularity == 'YYYY-MM-DDThh:mm:ssZ':
             self._day_granularity= False
         else:
-            raise Error, "Non-standard granularity on server: %s" % granularity
+            raise Error("Non-standard granularity on server: %s" % granularity)
 
     def handleVerb(self, verb, kw):
         # validate kw first
@@ -92,7 +102,7 @@ class BaseClient(common.OAIPMH):
         # and we're basically hacking around non-wellformedness anyway,
         # but oh well
         if self._ignore_bad_character_hack:
-            xml = unicode(xml, 'UTF-8', 'replace')
+            xml = six.text_type(xml, 'UTF-8', 'replace')
             # also get rid of character code 12
             xml = xml.replace(chr(12), '?')
             xml = xml.encode('UTF-8')
@@ -264,8 +274,8 @@ class BaseClient(common.OAIPMH):
                                      namespaces=namespaces).evaluate
             # make sure we get back unicode strings instead
             # of lxml.etree._ElementUnicodeResult objects.
-            setSpec = unicode(e('string(oai:setSpec/text())'))
-            setName = unicode(e('string(oai:setName/text())'))
+            setSpec = six.text_type(e('string(oai:setSpec/text())'))
+            setName = six.text_type(e('string(oai:setName/text())'))
             # XXX setDescription nodes
             sets.append((setSpec, setName, None))
         return sets, token
@@ -289,11 +299,11 @@ class BaseClient(common.OAIPMH):
                                 'badVerb', 'cannotDisseminateFormat',
                                 'idDoesNotExist', 'noRecordsMatch',
                                 'noMetadataFormats', 'noSetHierarchy']:
-                    raise error.UnknownError,\
+                    raise error.UnknownError(\
                           "Unknown error code from server: %s, message: %s" % (
-                        code, msg)
+                        code, msg))
                 # find exception in error module and raise with msg
-                raise getattr(error, code[0].upper() + code[1:] + 'Error'), msg
+                raise getattr(error, code[0].upper() + code[1:] + 'Error')(msg)
         return tree
 
     def makeRequest(self, **kw):
@@ -327,8 +337,9 @@ class Client(BaseClient):
                 request_url = '%s?%s' % (self._base_url, urlencode(kw))
                 request = urllib2.Request(request_url, headers=headers)
             else:
+                binary_data = urlencode(kw).encode('utf-8')
                 request = urllib2.Request(
-                    self._base_url, data=urlencode(kw), headers=headers)
+                    self._base_url, data=binary_data, headers=headers)
 
             return retrieveFromUrlWaiting(request)
 
@@ -362,7 +373,7 @@ def retrieveFromUrlWaiting(request,
             f.close()
             # we successfully opened without having to wait
             break
-        except urllib2.HTTPError, e:
+        except urllib2.HTTPError as e:
             if e.code == 503:
                 try:
                     retryAfter = int(e.hdrs.get('Retry-After'))
@@ -376,7 +387,7 @@ def retrieveFromUrlWaiting(request,
                 # reraise any other HTTP error
                 raise
     else:
-        raise Error, "Waited too often (more than %s times)" % wait_max
+        raise Error("Waited too often (more than %s times)" % wait_max)
     return text
 
 class ServerClient(BaseClient):
