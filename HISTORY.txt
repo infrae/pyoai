@@ -3,6 +3,12 @@ Changelog
 
 2.4.6dev (unreleased)
 
+- Added Python 3 compatibility (contributed by Tobias Kurze)
+- Removed deprecated bootstrap.py script
+- Fixed all broken tests due to commit on "Jul 16, 2013" which was never reviewed.
+  This commit also changed the signature of core objects, and should not have happened
+  This is all very unfortunate, I would like to revert this, but I'm reluctant since clients
+  might depend on it.
 
 2.4.5 (2015-12-23)
 ~~~~~~~~~~~~~~~~~~

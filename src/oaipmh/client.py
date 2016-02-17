@@ -6,13 +6,13 @@ from __future__ import absolute_import
 try:
     import urllib.request as urllib2
     from urllib.parse import urlencode
-    from io import StringIO
+    text_type = str
 except ImportError:
     import urllib2
     from urllib import urlencode
-    from StringIO import StringIO
-    from types import SliceType
+    text_type = unicode
 
+import sys
 import base64
 from lxml import etree
 import time
@@ -20,8 +20,6 @@ import codecs
 
 from oaipmh import common, metadata, validation, error
 from oaipmh.datestamp import datestamp_to_datetime, datetime_to_datestamp
-import six
-from six.moves import range
 
 WAIT_DEFAULT = 120 # two minutes
 WAIT_MAX = 5
@@ -102,7 +100,7 @@ class BaseClient(common.OAIPMH):
         # and we're basically hacking around non-wellformedness anyway,
         # but oh well
         if self._ignore_bad_character_hack:
-            xml = six.text_type(xml, 'UTF-8', 'replace')
+            xml = text_type(xml, 'UTF-8', 'replace')
             # also get rid of character code 12
             xml = xml.replace(chr(12), '?')
             xml = xml.encode('UTF-8')
@@ -274,8 +272,8 @@ class BaseClient(common.OAIPMH):
                                      namespaces=namespaces).evaluate
             # make sure we get back unicode strings instead
             # of lxml.etree._ElementUnicodeResult objects.
-            setSpec = six.text_type(e('string(oai:setSpec/text())'))
-            setName = six.text_type(e('string(oai:setName/text())'))
+            setSpec = text_type(e('string(oai:setSpec/text())'))
+            setName = text_type(e('string(oai:setName/text())'))
             # XXX setDescription nodes
             sets.append((setSpec, setName, None))
         return sets, token
@@ -299,7 +297,7 @@ class BaseClient(common.OAIPMH):
                                 'badVerb', 'cannotDisseminateFormat',
                                 'idDoesNotExist', 'noRecordsMatch',
                                 'noMetadataFormats', 'noSetHierarchy']:
-                    raise error.UnknownError(\
+                    raise error.UnknownError(
                           "Unknown error code from server: %s, message: %s" % (
                         code, msg))
                 # find exception in error module and raise with msg
@@ -366,14 +364,15 @@ def retrieveFromUrlWaiting(request,
                            wait_max=WAIT_MAX, wait_default=WAIT_DEFAULT):
     """Get text from URL, handling 503 Retry-After.
     """
-    for i in range(wait_max):
+    for i in list(range(wait_max)):
         try:
             f = urllib2.urlopen(request)
             text = f.read()
             f.close()
             # we successfully opened without having to wait
             break
-        except urllib2.HTTPError as e:
+        except urllib2.HTTPError:
+            e = sys.exc_info()[1]
             if e.code == 503:
                 try:
                     retryAfter = int(e.hdrs.get('Retry-After'))
