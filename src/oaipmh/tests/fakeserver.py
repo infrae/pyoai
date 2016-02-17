@@ -73,9 +73,10 @@ def createFakeData():
         hour = i % 24
         minute = i % 60
         second = i % 60
+        fake_element = None
         datestamp = datetime(year, month, day, hour, minute, second)
-        data.append((common.Header(str(i), datestamp, '', False),
-                     common.Metadata({'title': ['Title %s' % i]}),
+        data.append((common.Header(fake_element, str(i), datestamp, '', False),
+                     common.Metadata(fake_element, {'title': ['Title %s' % i]}),
                      None))
     return data
     
@@ -98,8 +99,9 @@ class FakeServerWithDeletions(FakeServerBase):
             month = i + 1
             day = 1
             datestamp = datetime(year, month, day, 12, 30, 0)
-            data.append((common.Header(str(i), datestamp, '', False),
-                         common.Metadata({'title': ['Title %s' % i]}),
+            fake_element = None
+            data.append((common.Header(fake_element, str(i), datestamp, '', False),
+                         common.Metadata(fake_element, {'title': ['Title %s' % i]}),
                          None))
         self._data = data
         
@@ -112,7 +114,8 @@ class FakeServerWithDeletions(FakeServerBase):
             month = i + 1
             day = 1
             datestamp = datetime(year, month, day, 12, 35, 0)
-            data.append((common.Header(str(i), datestamp, '', True),
+            fake_element = None
+            data.append((common.Header(fake_element, str(i), datestamp, '', True),
                          None,
                          None))
         # replace first half with deleted records
