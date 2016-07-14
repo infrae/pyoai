@@ -1,3 +1,5 @@
+import six
+
 from lxml.etree import ElementTree, Element, SubElement
 from lxml import etree
 from datetime import datetime
@@ -260,7 +262,7 @@ class ServerBase(common.ResumptionOAIPMH):
             new_kw = {}
             try:
                 for key, value in request_kw.items():
-                    new_kw[bytes(key, 'ascii').decode('ascii')] = value
+                    new_kw[six.text_type(key).encode('ascii').decode('ascii')] = value
             except UnicodeError:
                 raise error.BadVerbError(
                     "Non-ascii keys in request."
