@@ -32,11 +32,11 @@ for num, record in enumerate(records):
     if record[0].isDeleted():
         deleted_count += 1
         delinfo = '(deleted)'
-    print '%0.6d %s %s' % (num, record[0].identifier(), delinfo)
-    print '       %s' % ';'.join(record[0].setSpec())
+    print('%0.6d %s %s' % (num, record[0].identifier(), delinfo))
+    print('       %s' % ';'.join(record[0].setSpec()))
 
-print 'Harvested %s records, of which %s were deleted' % (record_count,
-                                                          deleted_count)
+print('Harvested %s records, of which %s were deleted' % (record_count,
+                                                          deleted_count))
     
 
 
