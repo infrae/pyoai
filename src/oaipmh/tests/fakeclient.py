@@ -66,7 +66,7 @@ class FakeCreaterClient(client.Client):
         self._mapping_path = mapping_path
         
     def makeRequest(self, **kw):
-        print kw
+        print(kw)
         text = client.Client.makeRequest(self, **kw)
         self._mapping[getRequestKey(kw)] = text
         return text
