@@ -18,7 +18,7 @@ class FakeServerCommon(object):
         try:
             return self._data[int(identifier)]
         except IndexError:
-            raise error.IdDoesNotExistError, "Id does not exist: %s" % identifier
+            raise error.IdDoesNotExistError("Id does not exist: %s" % identifier)
 
 class FakeServerBase(FakeServerCommon):
     

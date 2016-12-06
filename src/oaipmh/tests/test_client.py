@@ -1,6 +1,7 @@
 from unittest import TestCase, TestSuite, main, makeSuite
 from fakeclient import FakeClient, GranularityFakeClient, TestError
 import os
+import sys
 from datetime import datetime
 from oaipmh import common, metadata, validation
 
@@ -91,9 +92,10 @@ class ClientTestCase(TestCase):
         try:
             headers = fakeclient.listIdentifiers(from_=None,
                                                  metadataPrefix='oai_dc')
-        except KeyError, e:
+        except KeyError:
+            exc_type, _, _ = sys.exc_info()
             self.assertEquals('metadataPrefix=oai_dc&verb=ListIdentifiers',
-                              e.args[0])
+                              exc_type.args[0])
             
     def test_listIdentifiers_argument_error(self):
         self.assertRaises(
@@ -154,17 +156,19 @@ class ClientTestCase(TestCase):
         try:
             fakeclient.listRecords(from_=datetime(2003, 4, 10, 14, 0),
                                    metadataPrefix='oai_dc')
-        except TestError, e:
-            self.assertEquals('2003-04-10T14:00:00Z', e.kw['from'])
+        except TestError:
+            exc_type, _, _ = sys.exc_info()
+            self.assertEquals('2003-04-10T14:00:00Z', exc_type.kw['from'])
         fakeclient = GranularityFakeClient(granularity='YYYY-MM-DD')
         fakeclient.updateGranularity()
         try:
             fakeclient.listRecords(from_=datetime(2003, 4, 10, 14, 0),
                                    until=datetime(2004, 6, 17, 15, 30),
                                    metadataPrefix='oai_dc')
-        except TestError, e:
-            self.assertEquals('2003-04-10', e.kw['from'])
-            self.assertEquals('2004-06-17', e.kw['until'])
+        except TestError:
+            exc_type, _, _ = sys.exc_info()
+            self.assertEquals('2003-04-10', exc_type.kw['from'])
+            self.assertEquals('2004-06-17', exc_type.kw['until'])
             
 def test_suite():
     return TestSuite((makeSuite(ClientTestCase), ))
