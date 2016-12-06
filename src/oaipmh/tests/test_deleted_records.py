@@ -25,7 +25,7 @@ class DeletedRecordsTestCase(TestCase):
         self.assert_(not header.isDeleted())
 
     def test_listRecords(self):
-        records = fakeclient.listRecords(from_=datetime(2004, 01, 01),
+        records = fakeclient.listRecords(from_=datetime(2004, 1, 1),
                                          metadataPrefix='oai_dc')
         # lazy, just test first one
         for header, metadata, about in records:

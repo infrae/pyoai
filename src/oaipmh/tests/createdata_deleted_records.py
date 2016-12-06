@@ -6,40 +6,40 @@ server = FakeCreaterServerProxy(
     '/home/eric/CVS_checkouts/oai/tests/fake2')
 
 #deleted record
-print "GetRecord"
+print("GetRecord")
 header, metadata, about = server.getRecord(
     metadataPrefix='oai_dc', identifier='hdl:1765/1160')
-print "identifier:", header.identifier()
-print "datestamp:", header.datestamp()
-print "setSpec:", header.setSpec()
-print "isDeleted:", header.isDeleted()
+print("identifier:", header.identifier())
+print("datestamp:", header.datestamp())
+print("setSpec:", header.setSpec())
+print("isDeleted:", header.isDeleted())
 print
 
 #normal record
-print "GetRecord"
+print("GetRecord")
 header, metadata, about = server.getRecord(
     metadataPrefix='oai_dc', identifier='hdl:1765/1162')
-print "identifier:", header.identifier()
-print "datestamp:", header.datestamp()
-print "setSpec:", header.setSpec()
-print "isDeleted:", header.isDeleted()
+print("identifier:", header.identifier())
+print("datestamp:", header.datestamp())
+print("setSpec:", header.setSpec())
+print("isDeleted:", header.isDeleted())
 print
 
-print "ListRecords"
+print("ListRecords")
 for header, metadata, about in server.listRecords(
-    from_=datetime(2004, 01, 01), until=datetime(2004, 02, 01),
+    from_=datetime(2004, 1, 1), until=datetime(2004, 2, 1),
     metadataPrefix='oai_dc'):
-    print "header"
-    print "identifier:", header.identifier()
-    print "datestamp:", header.datestamp()
-    print "setSpec:", header.setSpec()
-    print "isDeleted:", header.isDeleted()
-    print "metadata"
+    print("header")
+    print("identifier:", header.identifier())
+    print("datestamp:", header.datestamp())
+    print("setSpec:", header.setSpec())
+    print("isDeleted:", header.isDeleted())
+    print("metadata")
     if metadata is not None:
         for fieldname in metadata.getMap().keys():
-            print "%s:" % fieldname, metadata.getField(fieldname)
-    print "about"
-    print about
+            print("%s:" % fieldname, metadata.getField(fieldname))
+    print("about")
+    print(about)
 print
 
 server.save()

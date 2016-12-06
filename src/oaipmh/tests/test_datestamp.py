@@ -3,6 +3,7 @@ from unittest import TestCase, TestSuite, makeSuite
 from oaipmh.datestamp import datestamp_to_datetime,\
      tolerant_datestamp_to_datetime
 from oaipmh.error import DatestampError
+import sys
 
 class DatestampTestCase(TestCase):
     def test_strict_datestamp_to_datetime(self):
@@ -33,8 +34,9 @@ class DatestampTestCase(TestCase):
                           datestamp_to_datetime, 'foo')
         try:
             datestamp_to_datetime('foo')
-        except DatestampError, e:
-            self.assertEquals('foo', e.datestamp)
+        except DatestampError:
+            exc_type, _, _ = sys.exc_info()
+            self.assertEquals('foo', exc_type.datestamp)
 
     def test_strict_datestamp_to_datetime_inclusive(self):
         # passing inclusive=True to datestamp_to_datetime

@@ -113,7 +113,7 @@ class ServerTestCase(unittest.TestCase):
         
     def test_listIdentifiers(self):
         xml = self._server.listIdentifiers(
-            from_=datetime(2003, 04, 10),
+            from_=datetime(2003, 4, 10),
             metadataPrefix='oai_dc')
         tree = etree.parse(StringIO(xml))
         self.assert_(oaischema.validate(tree))
