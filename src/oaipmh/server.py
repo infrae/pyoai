@@ -423,16 +423,16 @@ class BatchingResumption(common.ResumptionOAIPMH):
             kw['batch_size'] = self._batch_size + 1  
             result = method(**kw)
             result = list(result)
-            if len(result) > self._batch_size:
+            if len(result) > cursor + self._batch_size:
                 # more results are expected, so encode resumption token
                 resumptionToken = encodeResumptionToken(
                     kw, cursor + self._batch_size)
-                # we also want to result only the batch_size, so pop the
-                # last one
-                result.pop()
+                cursor_end = cursor + self._batch_size
             else:
                 # no more results are expected
                 resumptionToken = None
+                cursor_end = len(result)
+            result = result[cursor:cursor_end]
             return result, resumptionToken
         return method(**kw)
     
