@@ -7,7 +7,7 @@ class ArgumentValidatorTestCase(unittest.TestCase):
             'foo': 'optional',
             'bar': 'optional'
             }
-        self.assertEquals(
+        self.assertEqual(
             None,
             validation.validate(spec, {'foo': 'Foo', 'bar': 'Bar'}))
         # an extra argument gives an error
@@ -16,10 +16,10 @@ class ArgumentValidatorTestCase(unittest.TestCase):
             validation.validate,
             spec, {'hoi': 'Hoi', 'foo': 'Foo', 'bar': 'Bar'})
         # a missing optional argument is fine
-        self.assertEquals(
+        self.assertEqual(
             None,
             validation.validate(spec, {'foo': 'Foo'}))
-        self.assertEquals(
+        self.assertEqual(
             None,
             validation.validate(spec, {}))
 
@@ -27,10 +27,10 @@ class ArgumentValidatorTestCase(unittest.TestCase):
         spec = {
             'foo': 'required',
             'bar': 'optional'}
-        self.assertEquals(
+        self.assertEqual(
             None,
             validation.validate(spec, {'foo': 'Foo', 'bar': 'Bar'}))
-        self.assertEquals(
+        self.assertEqual(
             None,
             validation.validate(spec, {'foo': 'Foo'}))
         self.assertRaises(
@@ -42,7 +42,7 @@ class ArgumentValidatorTestCase(unittest.TestCase):
             'foo': 'required',
             'bar': 'required',
             'hoi': 'exclusive'}
-        self.assertEquals(
+        self.assertEqual(
             None,
             validation.validate(spec, {'foo': 'Foo', 'bar': 'Bar'}))
         self.assertRaises(
@@ -52,7 +52,7 @@ class ArgumentValidatorTestCase(unittest.TestCase):
             validation.BadArgumentError,
             validation.validate, spec, {'bar': 'Bar'})
         # or a single exclusive argument
-        self.assertEquals(
+        self.assertEqual(
             None,
             validation.validate(spec, {'hoi': 'Hoi'}))
         self.assertRaises(
