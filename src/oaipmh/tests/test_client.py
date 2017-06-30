@@ -56,7 +56,7 @@ class ClientTestCase(TestCase):
             identify.compression())
 
     def test_listIdentifiers(self):
-        headers = fakeclient.listIdentifiers(from_=datetime(2003, 04, 10),
+        headers = fakeclient.listIdentifiers(from_=datetime(2003, 4, 10),
                                              metadataPrefix='oai_dc')
         # lazy, just test first one
         headers = list(headers)
@@ -77,7 +77,7 @@ class ClientTestCase(TestCase):
 
     def test_listIdentifiers_until_none(self):
         # test listIdentifiers with until argument as None explicitly
-        headers = fakeclient.listIdentifiers(from_=datetime(2003, 04, 10),
+        headers = fakeclient.listIdentifiers(from_=datetime(2003, 4, 10),
                                              until=None,
                                              metadataPrefix='oai_dc')
         self.assertEquals(16, len(list(headers)))
@@ -91,7 +91,7 @@ class ClientTestCase(TestCase):
         try:
             headers = fakeclient.listIdentifiers(from_=None,
                                                  metadataPrefix='oai_dc')
-        except KeyError, e:
+        except KeyError as e:
             self.assertEquals('metadataPrefix=oai_dc&verb=ListIdentifiers',
                               e.args[0])
             
@@ -102,7 +102,7 @@ class ClientTestCase(TestCase):
             foo='bar')
         
     def test_listRecords(self):
-        records = fakeclient.listRecords(from_=datetime(2003, 04, 10),
+        records = fakeclient.listRecords(from_=datetime(2003, 4, 10),
                                          metadataPrefix='oai_dc')
         records = list(records)
         # lazy, just test first one
@@ -152,17 +152,17 @@ class ClientTestCase(TestCase):
         fakeclient = GranularityFakeClient(granularity='YYYY-MM-DDThh:mm:ssZ')
         fakeclient.updateGranularity()
         try:
-            fakeclient.listRecords(from_=datetime(2003, 04, 10, 14, 0),
+            fakeclient.listRecords(from_=datetime(2003, 4, 10, 14, 0),
                                    metadataPrefix='oai_dc')
-        except TestError, e:
+        except TestError as e:
             self.assertEquals('2003-04-10T14:00:00Z', e.kw['from'])
         fakeclient = GranularityFakeClient(granularity='YYYY-MM-DD')
         fakeclient.updateGranularity()
         try:
-            fakeclient.listRecords(from_=datetime(2003, 04, 10, 14, 0),
-                                   until=datetime(2004, 06, 17, 15, 30),
+            fakeclient.listRecords(from_=datetime(2003, 4, 10, 14, 0),
+                                   until=datetime(2004, 6, 17, 15, 30),
                                    metadataPrefix='oai_dc')
-        except TestError, e:
+        except TestError as e:
             self.assertEquals('2003-04-10', e.kw['from'])
             self.assertEquals('2004-06-17', e.kw['until'])
             

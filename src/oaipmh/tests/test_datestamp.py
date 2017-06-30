@@ -33,7 +33,7 @@ class DatestampTestCase(TestCase):
                           datestamp_to_datetime, 'foo')
         try:
             datestamp_to_datetime('foo')
-        except DatestampError, e:
+        except DatestampError as e:
             self.assertEquals('foo', e.datestamp)
 
     def test_strict_datestamp_to_datetime_inclusive(self):
