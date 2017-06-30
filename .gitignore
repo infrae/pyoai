@@ -4,3 +4,4 @@ bin
 develop-eggs
 parts
 src/pyoai.egg-info
+.tox
