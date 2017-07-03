@@ -4,8 +4,8 @@ OAIPMH
 ======
 
 
-.. image:: https://travis-ci.org/mpasternak/pyoai.svg?branch=master
-    :target: https://travis-ci.org/mpasternak/pyoai
+.. image:: https://travis-ci.org/jascoul/pyoai.svg?branch=master
+    :target: https://travis-ci.org/jascoul/pyoai
 
 The oaipmh module is a Python implementation of an "Open Archives
 Initiative Protocol for Metadata Harvesting" (version 2) client and
