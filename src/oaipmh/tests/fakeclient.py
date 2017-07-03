@@ -1,8 +1,11 @@
 from oaipmh import client, common
 import os.path
 from datetime import datetime
-from urllib import urlencode
-from string import zfill
+try:
+    from urllib.parse import urlencode
+except ImportError:
+    from urllib import urlencode
+
 
 class FakeClient(client.BaseClient):
     def __init__(self, mapping_path):
@@ -39,7 +42,7 @@ class GranularityFakeClient(client.BaseClient):
 def getRequestKey(kw):
     """Create stable key for request dictionary to use in file.
     """
-    items = kw.items()
+    items = list(kw.items())
     items.sort()
     return urlencode(items)
 
@@ -66,7 +69,6 @@ class FakeCreaterClient(client.Client):
         self._mapping_path = mapping_path
         
     def makeRequest(self, **kw):
-        print kw
         text = client.Client.makeRequest(self, **kw)
         self._mapping[getRequestKey(kw)] = text
         return text
@@ -78,7 +80,7 @@ class FakeCreaterClient(client.Client):
         for request, response in self._mapping.items():
             f.write(request)
             f.write('\n')
-            filename = zfill(str(i), 5) + '.xml'
+            filename = str(i).zfill(5) + ".xml"
             f.write(filename)
             f.write('\n')
             response_f = open(os.path.join(mapping_path, filename), 'w')

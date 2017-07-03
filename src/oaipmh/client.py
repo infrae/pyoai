@@ -3,14 +3,14 @@
 from __future__ import nested_scopes
 from __future__ import absolute_import
 
+import six
+
 try:
     import urllib.request as urllib2
     from urllib.parse import urlencode
-    text_type = str
 except ImportError:
     import urllib2
     from urllib import urlencode
-    text_type = unicode
 
 import sys
 import base64
@@ -100,10 +100,14 @@ class BaseClient(common.OAIPMH):
         # and we're basically hacking around non-wellformedness anyway,
         # but oh well
         if self._ignore_bad_character_hack:
-            xml = text_type(xml, 'UTF-8', 'replace')
+            xml = six.text_type(xml, 'UTF-8', 'replace')
             # also get rid of character code 12
             xml = xml.replace(chr(12), '?')
             xml = xml.encode('UTF-8')
+        if six.PY3:
+            if hasattr(xml, "encode"):
+                xml = xml.encode("utf-8")
+            # xml = xml.encode("utf-8")
         return etree.XML(xml)
 
     # implementation of the various methods, delegated here by
@@ -272,8 +276,8 @@ class BaseClient(common.OAIPMH):
                                      namespaces=namespaces).evaluate
             # make sure we get back unicode strings instead
             # of lxml.etree._ElementUnicodeResult objects.
-            setSpec = text_type(e('string(oai:setSpec/text())'))
-            setName = text_type(e('string(oai:setName/text())'))
+            setSpec = six.text_type(e('string(oai:setSpec/text())'))
+            setName = six.text_type(e('string(oai:setName/text())'))
             # XXX setDescription nodes
             sets.append((setSpec, setName, None))
         return sets, token

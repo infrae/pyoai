@@ -1,6 +1,6 @@
 import os
 from datetime import datetime
-from unittest import TestCase, TestSuite, makeSuite
+from unittest import TestCase, TestSuite, makeSuite, main
 
 from fakeclient import FakeClient
 from oaipmh import metadata, error
@@ -29,3 +29,6 @@ class BrokenDataTestCase(TestCase):
 
 def test_suite():
     return TestSuite((makeSuite(BrokenDataTestCase), ))
+
+if __name__ == '__main__':
+    main()
