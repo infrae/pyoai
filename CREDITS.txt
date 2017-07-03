@@ -16,6 +16,9 @@ Jasper Op de Coul <jasper@infrae.com>
 Thanks to
 =========
 
+
+Uli Köhler and Michał Pasternak for Python3 compatibility. 
+
 Jan-Wijbrand Kolman for API feedback.
 
 Thom Hickey for critical discussion of the source code.
