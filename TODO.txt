@@ -1,6 +1,0 @@
-TODO
-====
-
-* Handle 'description' field in various places
-
-* compression support?
