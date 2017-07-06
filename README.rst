@@ -3,6 +3,8 @@
 OAIPMH
 ======
 
+.. image:: https://img.shields.io/pypi/v/pyoai.svg
+        :target: https://pypi.python.org/pypi/pyoai
 
 .. image:: https://travis-ci.org/mpasternak/pyoai.svg?branch=master
     :target: https://travis-ci.org/mpasternak/pyoai
