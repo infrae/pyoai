@@ -1,8 +1,20 @@
 from unittest import TestCase, TestSuite, main, makeSuite
+try:
+    from unittest import mock
+except ImportError:  # python < 3.3
+    import mock
+
 from fakeclient import FakeClient, GranularityFakeClient, TestError
 import os
 from datetime import datetime
-from oaipmh import common, metadata, validation
+try:
+    import urllib.request as urllib2
+    URLOPEN_PATH = 'urllib.request.urlopen'
+except ImportError:
+    import urllib2
+    URLOPEN_PATH = 'urllib2.urlopen'
+
+from oaipmh import common, metadata, validation, client
 
 directory = os.path.dirname(__file__)
 fake1 = os.path.join(directory, 'fake1')
@@ -11,8 +23,13 @@ fakeclient = FakeClient(fake1)
 fakeclient.getMetadataRegistry().registerReader(
     'oai_dc', metadata.oai_dc_reader)
 
+
+def http_error(code):
+    return urllib2.HTTPError('mock-url', code, 'error', {}, None)
+
+
 class ClientTestCase(TestCase):
-    
+
     def test_getRecord(self):
         header, metadata, about = fakeclient.getRecord(
             metadataPrefix='oai_dc', identifier='hdl:1765/315')
@@ -23,14 +40,14 @@ class ClientTestCase(TestCase):
             ['2:7'],
             header.setSpec())
         self.assert_(not header.isDeleted())
-        
+
     def test_getMetadata(self):
         metadata = fakeclient.getMetadata(
             metadataPrefix='oai_dc', identifier='hdl:1765/315')
         self.assertEquals(metadata.tag,
                           '{http://www.openarchives.org/OAI/2.0/oai_dc/}dc')
 
-        
+
     def test_identify(self):
         identify = fakeclient.identify()
         self.assertEquals(
@@ -60,7 +77,7 @@ class ClientTestCase(TestCase):
                                              metadataPrefix='oai_dc')
         # lazy, just test first one
         headers = list(headers)
-        
+
         header = headers[0]
         self.assertEquals(
             'hdl:1765/308',
@@ -94,13 +111,13 @@ class ClientTestCase(TestCase):
         except KeyError as e:
             self.assertEquals('metadataPrefix=oai_dc&verb=ListIdentifiers',
                               e.args[0])
-            
+
     def test_listIdentifiers_argument_error(self):
         self.assertRaises(
             validation.BadArgumentError,
             fakeclient.listIdentifiers,
             foo='bar')
-        
+
     def test_listRecords(self):
         records = fakeclient.listRecords(from_=datetime(2003, 4, 10),
                                          metadataPrefix='oai_dc')
@@ -121,7 +138,7 @@ class ClientTestCase(TestCase):
         self.assertEquals(
             ['Kijken in het brein: Over de mogelijkheden van neuromarketing'],
             metadata.getField('title'))
-            
+
     def test_listMetadataFormats(self):
         formats = fakeclient.listMetadataFormats()
         metadataPrefix, schema, metadataNamespace = formats[0]
@@ -165,7 +182,44 @@ class ClientTestCase(TestCase):
         except TestError as e:
             self.assertEquals('2003-04-10', e.kw['from'])
             self.assertEquals('2004-06-17', e.kw['until'])
-            
+
+    def test_no_retry_policy(self):
+        """check request is not retried by default on HTTP 500 errors"""
+        with mock.patch(URLOPEN_PATH, side_effect=http_error(500)):
+            urlclient = client.Client('http://mock.me')
+            with self.assertRaises(urllib2.HTTPError):
+                urlclient.listRecords(from_=datetime(2003, 4, 10),
+                                      metadataPrefix='oai_dc')
+
+    def test_custom_retry_policy(self):
+        """check request is retried on 500 if asked to"""
+        with mock.patch(URLOPEN_PATH, side_effect=http_error(500)):
+            with mock.patch('time.sleep') as sleep:
+                urlclient = client.Client('http://mock.me', custom_retry_policy={
+                    'expected-errcodes': {500},
+                    'wait-default': 5,
+                    'retry': 3,
+                })
+                with self.assertRaises(client.Error):
+                    urlclient.listRecords(from_=datetime(2003, 4, 10),
+                                          metadataPrefix='oai_dc')
+                self.assertEqual(sleep.call_count, 3)
+                sleep.assert_has_calls([mock.call(5)] * 3)
+
+    def test_custom_retry_policy_default_wait_max(self):
+        with mock.patch(URLOPEN_PATH, side_effect=http_error(500)):
+            with mock.patch('time.sleep') as sleep:
+                urlclient = client.Client('http://mock.me', custom_retry_policy={
+                    'expected-errcodes': {500},
+                    'wait-default': 5,
+                })
+                with self.assertRaises(client.Error):
+                    urlclient.listRecords(from_=datetime(2003, 4, 10),
+                                          metadataPrefix='oai_dc')
+                self.assertEqual(sleep.call_count, 5)
+                sleep.assert_has_calls([mock.call(5)] * 5)
+
+
 def test_suite():
     return TestSuite((makeSuite(ClientTestCase), ))
 
