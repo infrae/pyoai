@@ -8,10 +8,10 @@ except ImportError:
 
 
 class FakeClient(client.BaseClient):
-    def __init__(self, mapping_path):
-        client.BaseClient.__init__(self)
+    def __init__(self, mapping_path, custom_retry_policy=None):
+        client.BaseClient.__init__(self, custom_retry_policy=custom_retry_policy)
         self._mapping = createMapping(mapping_path)
-        
+
     def makeRequest(self, **kw):
         # this is a complete fake, and can only deal with a number of
         # fixed requests that are mapped to files
@@ -21,12 +21,12 @@ class FakeClient(client.BaseClient):
 class TestError(Exception):
     def __init__(self, kw):
         self.kw = kw
-        
+
 class GranularityFakeClient(client.BaseClient):
     def __init__(self, granularity):
         client.BaseClient.__init__(self)
         self._granularity = granularity
-        
+
     def makeRequest(self, **kw):
         # even more fake, we'll simply raise an exception with the request
         # this can be caught by the test to see whether the request uses
@@ -67,7 +67,7 @@ class FakeCreaterClient(client.Client):
         client.Client.__init__(self, base_url, metadata_registry)
         self._mapping = {}
         self._mapping_path = mapping_path
-        
+
     def makeRequest(self, **kw):
         text = client.Client.makeRequest(self, **kw)
         self._mapping[getRequestKey(kw)] = text

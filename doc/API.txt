@@ -314,6 +314,27 @@ a coarse way to control how many items are read before stopping. If
 the amount of items exceeds ``max`` after reading a resumptionToken,
 the method will halt.
 
+retry policy
+------------
+
+When the harvested OAI server returns an HTTP 503, the default policy is to
+retry 5 times and wait 120 seconds between each try. Due to the variety of OAI
+server implementations, one might want to configure those parameters. This
+policy can be customized through the ``BaseClient.custom_retry_policy``'s
+parameter. For instance::
+
+    >>> client = Client('http://the-oai-base-url.org', custom_retry_policy={
+            # retry on both 500 and 503 HTTP return codes
+            'expected-errcodes': {500, 503},
+            # wait for 30 seconds before retrying
+            'wait-default': 30,
+            # retry 10 times
+            'retry': 10,
+        })
+)
+
+
+
 .. _OAI-PMH protocol: http://www.openarchives.org/OAI/openarchivesprotocol.html
 
 .. _Protocol Requests and Responses: http://www.openarchives.org/OAI/openarchivesprotocol.html#ProtocolMessages
