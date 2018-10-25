@@ -38,6 +38,10 @@ def _datestamp_to_datetime(datestamp, inclusive=False):
             t = '00:00:00'
     YYYY, MM, DD = d.split('-')
     hh, mm, ss = t.split(':') # this assumes there's no timezone info
+    # Some Dspace implementations are returning the in the YYYY-MM-DDThh:mm:ss.sssZ format 
+    # instead of YYYY-MM-DDThh:mm:ssZ as specified in the AOI-PMH protocol
+    # This resolves that
+    ss = ss.split('.')[0]
     return datetime.datetime(
         int(YYYY), int(MM), int(DD), int(hh), int(mm), int(ss))
 
