@@ -107,7 +107,7 @@ class BaseClient(common.OAIPMH):
         """
         self._ignore_bad_character_hack = true_or_false
 
-    def parse(self, xml):
+    def parse(self, xml, recover=False):
         """Parse the XML to a lxml tree.
         """
         # XXX this is only safe for UTF-8 encoded content,
@@ -122,7 +122,7 @@ class BaseClient(common.OAIPMH):
             if hasattr(xml, "encode"):
                 xml = xml.encode("utf-8")
             # xml = xml.encode("utf-8")
-        return etree.XML(xml)
+        return etree.XML(xml, etree.XMLParser(recover=recover))
 
     # implementation of the various methods, delegated here by
     # handleVerb method
