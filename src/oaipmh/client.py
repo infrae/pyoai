@@ -17,6 +17,8 @@ import base64
 from lxml import etree
 import time
 import codecs
+import logging
+logger = logging.getLogger( __name__ )
 
 from oaipmh import common, metadata, validation, error
 from oaipmh.datestamp import datestamp_to_datetime, datetime_to_datestamp
@@ -300,8 +302,20 @@ class BaseClient(common.OAIPMH):
         xml = self.makeRequest(**kw)
         try:
             tree = self.parse(xml)
-        except SyntaxError:
-            raise error.XMLSyntaxError(kw)
+        except SyntaxError as e:
+            try: # try again
+                logger.warning( e )
+                logger.warning( 'attempting to recover...')
+                tree = self.parse(xml, recover=True )
+                ids = tree.xpath( '/oai:OAI-PMH/oai:ListRecords/oai:record/oai:header/oai:identifier', namespaces=self.getNamespaces() )
+                if len(ids) == 1:
+                    logger.warning("Recoverable parse error on: {0}".format( ids[0].text ))
+                else:
+                    logger.warning(
+                    "Recoverable parse error on one or more of:\n {0}".format(
+                       "\n".join([ id.text for id in ids ])))
+            except SyntaxError:  # can't recover
+                raise error.XMLSyntaxError(kw)
         # check whether there are errors first
         e_errors = tree.xpath('/oai:OAI-PMH/oai:error',
                               namespaces=self.getNamespaces())
@@ -320,6 +334,7 @@ class BaseClient(common.OAIPMH):
                         code, msg))
                 # find exception in error module and raise with msg
                 raise getattr(error, code[0].upper() + code[1:] + 'Error')(msg)
+
         return tree
 
     def makeRequest(self, **kw):
