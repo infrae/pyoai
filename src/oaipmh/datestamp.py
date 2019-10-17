@@ -19,7 +19,8 @@ def datestamp_to_datetime(datestamp, inclusive=False):
     try:
         return _datestamp_to_datetime(datestamp, inclusive)
     except ValueError:
-        raise DatestampError(datestamp)
+        return datetime.datetime.now()
+        # raise DatestampError(datestamp)
     
 def _datestamp_to_datetime(datestamp, inclusive=False):
     splitted = datestamp.split('T')
