@@ -5,7 +5,11 @@ try:
     from urllib.parse import urlencode, quote, unquote
 except ImportError:
     from urllib import quote, unquote, urlencode
-import sys, cgi
+try:
+    from urllib.parse import parse_qs
+except ImportError:
+    from urlparse import parse_qs
+import sys
 
 from oaipmh import common, metadata, validation, error
 from oaipmh.datestamp import datestamp_to_datetime, datetime_to_datestamp, DatestampError
@@ -454,7 +458,7 @@ def decodeResumptionToken(token):
     token = str(unquote(token))
     
     try:
-        kw = cgi.parse_qs(token, True, True)
+        kw = parse_qs(token, True, True)
     except ValueError:
         raise error.BadResumptionTokenError(
               "Unable to decode resumption token: %s" % token)
