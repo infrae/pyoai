@@ -4,7 +4,7 @@ OAIPMH
 ======
 
 
-.. image:: https://travis-ci.org/jascoul/pyoai.svg?branch=master
+.. image:: https://github.com/infrae/pyoai/workflows/Run%20tests/badge.svg
     :target: https://travis-ci.org/jascoul/pyoai
 
 The oaipmh module is a Python implementation of an "Open Archives
