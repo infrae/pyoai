@@ -112,5 +112,39 @@ oai_dc_reader = MetadataReader(
     'dc' : 'http://purl.org/dc/elements/1.1/'}
     )
 
+oai_edm_reader = MetadataReader(
+    fields={
+    'identifier': ('textList', 'rdf:RDF/edm:ProvidedCHO/dc:identifier/text()'),
+    'language': ('textList', 'rdf:RDF/edm:ProvidedCHO/dc:language/text()'),
+    'rights': ('textList', 'rdf:RDF/edm:ProvidedCHO/dc:rights/text()'),
+    'description': ('textList', 'rdf:RDF/edm:ProvidedCHO/dc:description/text()'),
+    'publisher': ('textList', 'rdf:RDF/edm:ProvidedCHO/dc:publisher/text()'),
+    'subject': ('textList', 'rdf:RDF/skos:Concept[@rdf:about=//edm:ProvidedCHO/dc:subject/@rdf:resource]/skos:prefLabel/text()'),
+    'type': ('textList', 'rdf:RDF/skos:Concept[@rdf:about=//edm:ProvidedCHO/dc:type/@rdf:resource]/skos:prefLabel/text()'),
+    'temporal': ('textList', 'rdf:RDF/edm:TimeSpan[@rdf:about=//edm:ProvidedCHO/dcterms:temporal/@rdf:resource]/skos:prefLabel/text()'),
+    'file': ('textList', 'rdf:RDF/ore:Aggregation/edm:isShownBy/@rdf:resource'),
+    'title': ('textList', 'rdf:RDF/edm:ProvidedCHO/dc:title/text()'),
+    'creator': ('textList', 'rdf:RDF/edm:Agent[@rdf:about=//edm:ProvidedCHO/dc:creator/@rdf:resource]/skos:prefLabel/text()')
+    },
+    namespaces={
+    'dc' : 'http://purl.org/dc/elements/1.1/',
+    'edm': 'http://www.europeana.eu/schemas/edm/',
+    'oai_edm': 'http://www.europeana.eu/schemas/edm/',
+    'rdf': 'http://www.w3.org/1999/02/22-rdf-syntax-ns#',
+    'rdfs': 'http://www.w3.org/2000/01/rdf-schema#',
+    'skos': 'http://www.w3.org/2004/02/skos/core#',
+    'ore': 'http://www.openarchives.org/ore/terms/',
+    'wgs84': 'http://www.w3.org/2003/01/geo/wgs84_pos#',
+    'owl': 'http://www.w3.org/2002/07/owl#',
+    'rdaGr2': 'http://rdvocab.info/ElementsGr2/',
+    'ns13': 'http://www.w3.org/ns/odrl/2/',
+    'ns12': 'http://xmlns.com/foaf/0.1/',
+    'ns11': 'http://rdfs.org/sioc/services#',
+    'ns10': 'http://www.ebu.ch/metadata/ontologies/ebucore/ebucore#',
+    'dcterms': 'http://purl.org/dc/terms/',
+    'ns16': 'http://www.europeana.eu/schemas/edm/enrichment/',
+    'ns15': 'http://usefulinc.com/ns/doap#',
+    'ns14': 'http://creativecommons.org/ns#',
+    'dc': 'http://purl.org/dc/elements/1.1/'
+    }
 
-    
