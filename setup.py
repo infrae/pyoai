@@ -3,7 +3,7 @@ from os.path import join, dirname
 
 setup(
     name='pyoai',
-    version='2.5.1(unreleased)',
+    version='2.5.1pre',
     author='Infrae',
     author_email='info@infrae.com',
     url='http://www.infrae.com/download/oaipmh',
