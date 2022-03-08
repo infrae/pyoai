@@ -3,7 +3,7 @@ from os.path import join, dirname
 
 setup(
     name='pyoai',
-    version='2.5.1pre',
+    version='2.5.1',
     author='Infrae',
     author_email='info@infrae.com',
     url='http://www.infrae.com/download/oaipmh',
@@ -12,16 +12,11 @@ setup(
                  "License :: OSI Approved :: BSD License",
                  "Topic :: Software Development :: Libraries :: Python Modules",
                  "Environment :: Web Environment"],
-    description="""\
-The oaipmh module is a Python implementation of an "Open Archives
-Initiative Protocol for Metadata Harvesting" (version 2) client and server.
-The protocol is described here:
-
-http://www.openarchives.org/OAI/openarchivesprotocol.html
-""",
+    description="""The oaipmh module is a Python implementation of an "Open Archives Initiative Protocol for Metadata Harvesting" (version 2) client and server.""",
     long_description=(open(join(dirname(__file__), 'README.rst')).read()+
         '\n\n'+
         open(join(dirname(__file__), 'HISTORY.txt')).read()),
+    long_description_content_type='text/x-rst',
     packages=find_packages('src'),
     package_dir = {'': 'src'},
     zip_safe=False,
