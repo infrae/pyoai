@@ -1,14 +1,13 @@
-.. -*- restructuredtext -*-
-
+======
 OAIPMH
 ======
 
 .. image:: https://img.shields.io/pypi/v/pyoai.svg
         :target: https://pypi.python.org/pypi/pyoai
 
-.. image:: https://travis-ci.org/mpasternak/pyoai.svg?branch=master
-    :target: https://travis-ci.org/mpasternak/pyoai
-
+.. image:: https://github.com/infrae/pyoai/workflows/Run%20tests/badge.svg
+    :target: https://github.com/infrae/pyoai/actions?query=workflow%3A%22Run+tests%22
+    
 The oaipmh module is a Python implementation of an "Open Archives
 Initiative Protocol for Metadata Harvesting" (version 2) client and
 server. The protocol is described here:

@@ -1,232 +1,170 @@
 Changelog
 =========
+2.5.2 (unreleased)
 
-2.4.6dev (unreleased)
+2.5.1
 
-- Added Python 3 compatibility (contributed by Tobias Kurze)
-- Removed deprecated bootstrap.py script
-- Fixed all broken tests due to commit on "Jul 16, 2013" which was never reviewed.
-  This commit also changed the signature of core objects, and should not have happened
-  This is all very unfortunate, I would like to revert this, but I'm reluctant since clients
-  might depend on it.
+-  Added customizable client retry policy (contributed by adimascio)
 
-2.4.5 (2015-12-23)
-~~~~~~~~~~~~~~~~~~
+-  Added compatibility with Python 3.8 (contributed by krenzlin)
 
-- Added switch in client to force harvesting using HTTP Get method (contributed by Stefan Oderbolz).
+-  Do not resume ListRecord requests if no result was returned (contributed by wetneb)
 
-- Added unofficial GetMetadata verb in server and client. GetMetadata is 
-  identical to GetRecord, but only returns the first element below the 
-  oai:metadata element, it does not return the oai enveloppe.
+2.5.0 (2017-07-03) 
 
+-  Added Python 3 compatibility (contributed by Tobias Kurze, Uli Köhler
+   and Michał Pasternak)
+-  Travis support and badges (Michał Pasternak)
 
-2.4.4 (2010-09-30)
-~~~~~~~~~~~~~~~~~~
+2.4.5 (2015-12-23) 
 
-  * Changed contact info, Migrated code from Subversion to Mercurial
+-  Added switch in client to force harvesting using HTTP Get method
+   (contributed by Stefan Oderbolz).
 
-2.4.3 (2010-08-19)
-~~~~~~~~~~~~~~~~~~
+-  Added unofficial GetMetadata verb in server and client. GetMetadata
+   is identical to GetRecord, but only returns the first element below
+   the oai:metadata element, it does not return the oai enveloppe.
 
-Changes
--------
+2.4.4 (2010-09-30) 
 
-  * Convert lxml.etree._ElementUnicodeResult and ElementStringResult
-    to normal string and unicode objects, to prevent errors when these
-    objects get pickled. (lp #617439)
+-  Changed contact info, Migrated code from Subversion to Mercurial
 
-2.4.2 (2010-05-03)
-~~~~~~~~~~~~~~~~~~
+2.4.3 (2010-08-19) 
 
-Changes
--------
+-  Convert lxml.etree._ElementUnicodeResult and ElementStringResult to
+   normal string and unicode objects, to prevent errors when these
+   objects get pickled. (lp #617439)
 
-  * OAI_DC and DC namespace declarations should not be declared on the document
-    root, but on the child of the metadata element. According to the OAI spec
+2.4.2 (2010-05-03) 
 
-    
-2.4.1 (2009-11-16)
-~~~~~~~~~~~~~~~~~~
+-  OAI_DC and DC namespace declarations should not be declared on the
+   document root, but on the child of the metadata element. According to
+   the OAI spec
 
-Changes
--------
+2.4.1 (2009-11-16) 
 
- * When specifying a date (not a datetime) for the until parameter,
+-  When specifying a date (not a datetime) for the until parameter,
    default to 23:59:59 instead of 00:00:00
 
-2.4 (2009-05-04)
-~~~~~~~~~~~~~~~~
+2.4 (2009-05-04) 
 
-Changes
--------
+-  Included support for description elements in OAI Identify headers,
+   added ‘toolkit’ description by default.
 
-* Included support for description elements in OAI Identify headers,
-  added 'toolkit' description by default.
+2.3.1 (2009-04-24) 
 
-2.3.1 (2009-04-24)
-~~~~~~~~~~~~~~~~~~
+-  Raise correct error when from and until parameters have different
+   granularities
 
-Changes
--------
+2.3 (2009-04-23) 
 
-* Raise correct error when from and until parameters have different granularities
+-  Fixed bug and added tests for handling invalid dateTime formats, the
+   server will now respond with a BadArgument (XML) error instead of a
+   python traceback.
 
-2.3 (2009-04-23)
-~~~~~~~~~~~~~~~~
+-  Use buildout to create testrunner and environment as opposed to
+   ``test.py`` script.
 
-Changes
--------
+   Install buildout by:
 
-* Fixed bug and added tests for handling invalid dateTime formats, 
-  the server will now respond with a BadArgument (XML) error instead
-  of a python traceback.
+   $ python bootstrap.py $ bin/buildout
 
-* Use buildout to create testrunner and environment as opposed to
-  ``test.py`` script. 
+   Run the tests by doing:
 
-  Install buildout by:
+   $ bin/test
 
-    $ python bootstrap.py
-    $ bin/buildout
+   To get a python interpreter with the ``oaipmh`` library importable::
 
-  Run the tests by doing:
- 
-    $ bin/test
+   $ bin/devpython
 
-  To get a python interpreter with the ``oaipmh`` library importable::
+2.2.1 (2008-04-04) 
 
-    $ bin/devpython
+-  Added xml declaration to server output
+-  Prettyprint xml output
+-  compatibility fix: should be compatible with lxml 2.0 now
+-  server resumption tokens now work with POST requests.
+-  Fix for client code that handles 503 response from server.
 
-2.2.1 (2008-04-04)
-~~~~~~~~~~~~~~~~~~
+2.2 (2006-11-20) 
 
-Changes
--------
+-  Support for BatchingServer. A BatchingServer implements the
+   IBatchingOAI interface. This is very similar to IOAI, but methods get
+   a ‘cursor’ and ‘batch_size’ argument. This can be used to efficiently
+   implement batching OAI servers on top of relational databases.
 
-* Added xml declaration to server output
-* Prettyprint xml output
-* compatibility fix: should be compatible with lxml 2.0 now
-* server resumption tokens now work with POST requests.
-* Fix for client code that handles 503 response from server.
+-  Make it possible to explicitly pass None as the from or until
+   parameters for a OAIPMH client.
 
-2.2 (2006-11-20)
-~~~~~~~~~~~~~~~~
+-  an extra nsmap argument to Server and BatchingServer allows the
+   programmer to specify either namespace prefix to namespace URI
+   mappings that should be used in the server output.
 
-Changes
--------
+-  fixed a bug where the output wasn’t encoded properly as UTF-8.
 
-* Support for BatchingServer. A BatchingServer implements the
-  IBatchingOAI interface. This is very similar to IOAI, but methods
-  get a 'cursor' and 'batch_size' argument. This can be used to
-  efficiently implement batching OAI servers on top of relational
-  databases.
+2.1.5 (2006-09-18) 
 
-* Make it possible to explicitly pass None as the from or until parameters
-  for a OAIPMH client.
+-  compatibility fix: it should work with lxml 1.1 now.
 
-* an extra nsmap argument to Server and BatchingServer allows the
-  programmer to specify either namespace prefix to namespace URI mappings
-  that should be used in the server output.
+2.1.4 (2006-06-16) 
 
-* fixed a bug where the output wasn't encoded properly as UTF-8.
+-  Distribute as an egg.
 
-2.1.5 (2006-09-18)
-~~~~~~~~~~~~~~~~~~
+2.1.3 
 
-Changes
--------
+-  Add infrastructure to deal with non-XML compliant OAI-PMH feeds; an
+   XMLSyntaxError is raised in that case.
 
-* compatibility fix: it should work with lxml 1.1 now.
+-  added tolerant_datestamp_to_datetime which is a bit more tolerant
+   than the normal datestamp_to_datetime when encountering bad
+   datestamps.
 
-2.1.4 (2006-06-16)
-~~~~~~~~~~~~~~~~~~
+-  Split off datestamp handling into separate datestamp module.
 
-Changes
--------
+2.0 
 
-* Distribute as an egg.
+-  Add support for day-only granularity (YYYY-MM-DD) in client. calling
+   ‘updateGranularity’ with the client will check with the server (using
+   identify()) to see what granularity the server supports. If the
+   server only supports day level granularity, the client will make sure
+   only YYYY-MM-DD timestamps are sent.
 
-2.1.3
-~~~~~
+2.0b1 
 
-Changes
--------
+-  Added framework for implementing OAI-PMH compliant servers.
 
-* Add infrastructure to deal with non-XML compliant OAI-PMH feeds;
-  an XMLSyntaxError is raised in that case.
+-  Changed package structure: now a oaipmh namespace package. Client
+   functionality now in oaipmh.client.
 
-* added tolerant_datestamp_to_datetime which is a bit more tolerant
-  than the normal datestamp_to_datetime when encountering bad 
-  datestamps.
+-  Refactoring of oaipmh.py module to reuse code for both client and
+   server.
 
-* Split off datestamp handling into separate datestamp module.
+-  Extended testing infrastructure.
 
-2.0
-~~~
+-  Switched over from using libxml2 Python wrappers to the lxml binding.
 
-Changes
--------
-
-* Add support for day-only granularity (YYYY-MM-DD) in client.
-  calling 'updateGranularity' with the client will check with the
-  server (using identify()) to see what granularity the server
-  supports.  If the server only supports day level granularity, the
-  client will make sure only YYYY-MM-DD timestamps are sent.
-
-2.0b1
-~~~~~
-
-Changes
--------
-
-* Added framework for implementing OAI-PMH compliant servers.
-
-* Changed package structure: now a oaipmh namespace package. Client
-  functionality now in oaipmh.client.
-
-* Refactoring of oaipmh.py module to reuse code for both client and
-  server.
-
-* Extended testing infrastructure.
-
-* Switched over from using libxml2 Python wrappers to the lxml binding.
-
-* Use generators instead of hacked up __getitem__. This means that the
-  return from listRecords, listIdentifiers and listSets are now not
-  normal lists but iterators. They can easily be turned into a normal
-  list by using list() on them, however.
+-  Use generators instead of hacked up **getitem**. This means that the
+   return from listRecords, listIdentifiers and listSets are now not
+   normal lists but iterators. They can easily be turned into a normal
+   list by using list() on them, however.
 
 1.0.1 
-~~~~~
 
-Bugs fixed
-----------
+-  Typo in oaipmh.py
 
-* Typo in oaipmh.py
+1.0 
 
-1.0
-~~~
+-  Added an encoding parameter to the serialize call, which fixes a
+   unicode bug.
 
-Bugs fixed
-----------
+0.7.4 
 
-* Added an encoding parameter to the serialize call, which fixes a
-  unicode bug.
-
-0.7.4
-~~~~~
-
-Bugs fixed
-----------
-
-* A harvest can return records with <header status~"deleted"> that
-  contain no metadata and are merely an indication that that
-  metadata-set for that resource is no longer on the OAI service.
-  These records should be used to remove metadata from the catalog if
-  it is there, bur should never be stored or catalogued
-  themselves. They aren't now. (Fixed in zope/OAICore/core.py)
+-  A harvest can return records with <header status“deleted”> that
+   contain no metadata and are merely an indication that that
+   metadata-set for that resource is no longer on the OAI service. These
+   records should be used to remove metadata from the catalog if it is
+   there, bur should never be stored or catalogued themselves. They
+   aren’t now. (Fixed in zope/OAICore/core.py)
 
 0.7 
-~~~
 
 Initial public release.

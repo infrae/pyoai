@@ -27,13 +27,27 @@ WAIT_MAX = 5
 class Error(Exception):
     pass
 
-class BaseClient(common.OAIPMH):
 
-    def __init__(self, metadata_registry=None):
+class BaseClient(common.OAIPMH):
+    # retry policy on error. Default is to retry request `WAIT_MAX` times
+    # on HTTP 503 errors, waiting `WAIT_DEFAULT` before each retry
+    default_retry_policy = {
+        # how many seconds should we wait before each retry
+        'wait-default': WAIT_DEFAULT,
+        # how many times should we retry
+        'retry': WAIT_MAX,
+        # which HTTP codes are expected
+        'expected-errcodes': {503},
+    }
+
+    def __init__(self, metadata_registry=None, custom_retry_policy=None):
         self._metadata_registry = (
             metadata_registry or metadata.global_metadata_registry)
         self._ignore_bad_character_hack = 0
         self._day_granularity = False
+        self.retry_policy = self.default_retry_policy.copy()
+        if custom_retry_policy is not None:
+            self.retry_policy.update(custom_retry_policy)
 
     def updateGranularity(self):
         """Update the granularity setting dependent on that the server says.
@@ -249,7 +263,7 @@ class BaseClient(common.OAIPMH):
         # first find resumption token is available
         token = evaluator.evaluate(
             'string(/oai:OAI-PMH/*/oai:resumptionToken/text())')
-            #'string(/oai:OAI-PMH/oai:ListIdentifiers/oai:resumptionToken/text())')
+        #'string(/oai:OAI-PMH/oai:ListIdentifiers/oai:resumptionToken/text())')
         if token.strip() == '':
             token = None
         header_nodes = evaluator.evaluate(
@@ -312,9 +326,11 @@ class BaseClient(common.OAIPMH):
         raise NotImplementedError
 
 class Client(BaseClient):
-    def __init__(
-            self, base_url, metadata_registry=None, credentials=None, local_file=False, force_http_get=False):
-        BaseClient.__init__(self, metadata_registry)
+
+    def __init__(self, base_url, metadata_registry=None, credentials=None,
+                 local_file=False, force_http_get=False, custom_retry_policy=None):
+        BaseClient.__init__(self, metadata_registry,
+                            custom_retry_policy=custom_retry_policy)
         self._base_url = base_url
         self._local_file = local_file
         self._force_http_get = force_http_get
@@ -343,7 +359,12 @@ class Client(BaseClient):
                 request = urllib2.Request(
                     self._base_url, data=binary_data, headers=headers)
 
-            return retrieveFromUrlWaiting(request)
+            return retrieveFromUrlWaiting(
+                request,
+                wait_max=self.retry_policy['retry'],
+                wait_default=self.retry_policy['wait-default'],
+                expected_errcodes=self.retry_policy['expected-errcodes']
+            )
 
 def buildHeader(header_node, namespaces):
     e = etree.XPathEvaluator(header_node,
@@ -358,14 +379,17 @@ def buildHeader(header_node, namespaces):
 def ResumptionListGenerator(firstBatch, nextBatch):
     result, token = firstBatch()
     while 1:
+        itemFound = False
         for item in result:
             yield item
-        if token is None:
+            itemFound = True
+        if token is None or not itemFound:
             break
         result, token = nextBatch(token)
 
 def retrieveFromUrlWaiting(request,
-                           wait_max=WAIT_MAX, wait_default=WAIT_DEFAULT):
+                           wait_max=WAIT_MAX, wait_default=WAIT_DEFAULT,
+                           expected_errcodes={503}):
     """Get text from URL, handling 503 Retry-After.
     """
     for i in list(range(wait_max)):
@@ -375,9 +399,8 @@ def retrieveFromUrlWaiting(request,
             f.close()
             # we successfully opened without having to wait
             break
-        except urllib2.HTTPError:
-            e = sys.exc_info()[1]
-            if e.code == 503:
+        except urllib2.HTTPError as e:
+            if e.code in expected_errcodes:
                 try:
                     retryAfter = int(e.hdrs.get('Retry-After'))
                 except TypeError:
