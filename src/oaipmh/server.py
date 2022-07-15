@@ -477,7 +477,7 @@ def encodeResumptionToken(kw, cursor):
     if until is not None:
         kw['until'] = datetime_to_datestamp(until)
 #    return quote(urlencode(kw))
-    return base64.b64encode(str(urlencode(kw)))
+    return base64.b64encode(bytes(urlencode(kw), encoding="utf-8"))
 
 def decodeResumptionToken(token):
 #    token = str(unquote(token))
