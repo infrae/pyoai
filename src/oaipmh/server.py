@@ -1,6 +1,8 @@
 from lxml.etree import ElementTree, Element, SubElement
 from lxml import etree
 from datetime import datetime
+import base64
+
 try:
     from urllib.parse import urlencode, quote, unquote
 except ImportError:
@@ -48,6 +50,8 @@ class XMLTreeServer(object):
         self._outputHeader(e_record, header)   
         if not header.isDeleted():
             self._outputMetadata(e_record, kw['metadataPrefix'], metadata)
+            if about:
+                self._outputAbout(e_record, about)
         return envelope
 
     def getMetadata(self, **kw):
@@ -131,7 +135,8 @@ class XMLTreeServer(object):
                 self._outputHeader(e_record, header)
                 if not header.isDeleted():
                     self._outputMetadata(e_record, metadataPrefix, metadata)
-                # XXX about
+                    if about:
+                        self._outputAbout(e_record, about)
         self._outputResuming(
             e_listRecords,
             self._server.listRecords,
@@ -242,6 +247,25 @@ class XMLTreeServer(object):
                   "Unknown metadata format: %s" % metadata_prefix)
         self._metadata_registry.writeMetadata(
             metadata_prefix, e_metadata, metadata)
+
+    def _outputAbout(self, element, about):
+        if about.baseURL():
+            e_about = SubElement(element, nsoai('about'))
+            e_provenance = SubElement(e_about, nsoai('provenance'))
+            e_provenance.set ('xmlns', 'http://www.openarchives.org/OAI/2.0/provenance')
+            e_provenance.set ('{%s}schemaLocation' % NS_XSI, 'http://www.openarchives.org/OAI/2.0/provenance http://www.openarchives.org/OAI/2.0/provenance.xsd')
+            e_originDescription = SubElement(e_provenance, nsoai('originDescription'))
+            e_originDescription.set ('harvestDate', datetime_to_datestamp(about.harvestDate()))
+            e_originDescription.set ('altered', "true")
+            e_baseURL = SubElement(e_originDescription, nsoai('baseURL'))
+            e_baseURL.text = about.baseURL()
+            e_identifier = SubElement(e_originDescription, nsoai('identifier'))
+            e_identifier.text = about.identifier()
+            e_datestamp = SubElement(e_originDescription, nsoai('datestamp'))
+#           e_datestamp.text = datetime_to_datestamp(about.datestamp())
+            e_datestamp.text = about.datestamp()
+            e_metadataNamespace = SubElement(e_originDescription, nsoai('metadataNamespace'))
+            e_metadataNamespace.text = about.metadataNamespace()
 
 class ServerBase(common.ResumptionOAIPMH):
     """A server that responds to messages by returning OAI-PMH compliant XML.
@@ -453,10 +477,12 @@ def encodeResumptionToken(kw, cursor):
     if until is not None:
         kw['until'] = datetime_to_datestamp(until)
     return quote(urlencode(kw))
+    # return base64.b64encode(str(urlencode(kw)))
 
 def decodeResumptionToken(token):
     token = str(unquote(token))
-    
+    # token = base64.b64decode(token).decode('utf-8')
+
     try:
         kw = parse_qs(token, True, True)
     except ValueError:
@@ -468,6 +494,7 @@ def decodeResumptionToken(token):
         if key == 'from_' or key == 'until':
             value = datestamp_to_datetime(value)
         result[key] = value
+
     try:
         cursor = int(result.pop('cursor'))
     except (KeyError, ValueError):
