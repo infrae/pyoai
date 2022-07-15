@@ -476,12 +476,12 @@ def encodeResumptionToken(kw, cursor):
     until = kw.get('until')
     if until is not None:
         kw['until'] = datetime_to_datestamp(until)
-    return quote(urlencode(kw))
-    # return base64.b64encode(str(urlencode(kw)))
+#    return quote(urlencode(kw))
+    return base64.b64encode(str(urlencode(kw)))
 
 def decodeResumptionToken(token):
-    token = str(unquote(token))
-    # token = base64.b64decode(token).decode('utf-8')
+#    token = str(unquote(token))
+    token = base64.b64decode(token).decode('utf-8')
 
     try:
         kw = parse_qs(token, True, True)
