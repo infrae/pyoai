@@ -13,7 +13,7 @@ setup(
                  "Topic :: Software Development :: Libraries :: Python Modules",
                  "Environment :: Web Environment"],
     description="""The oaipmh module is a Python implementation of an "Open Archives Initiative Protocol for Metadata Harvesting" (version 2) client and server.""",
-    long_description=(open(join(dirname(__file__), 'README.rst', encoding='utf8')).read()+
+    long_description=(open(join(dirname(__file__), 'README.rst')).read()+
         '\n\n'+
         open(join(dirname(__file__), 'HISTORY.txt'), encoding='utf8').read()),
     long_description_content_type='text/x-rst',
