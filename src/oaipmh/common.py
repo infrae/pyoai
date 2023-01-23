@@ -47,7 +47,7 @@ class Metadata(object):
     __getitem__ = getField
 
 class About(object):
-    def __init__(self, element, baseURL, identifier, datestamp, metadataNamespace, harvestDate):
+    def __init__(self, element, baseURL, identifier, datestamp, metadataNamespace, harvestDate, repositoryID=None, reposioryName=None):
         self._element = element
         # force identifier to be a string, it might be 
         # an lxml.etree._ElementStringResult...
@@ -59,6 +59,8 @@ class About(object):
         self._baseURL = baseURL
         self._metadataNamespace = metadataNamespace
         self._harvestDate = harvestDate
+        self._repositoryID = repositoryID
+        self._repositoryName = repositoryName
 
     def element(self):
         return self._element
@@ -77,6 +79,12 @@ class About(object):
 
     def harvestDate(self):
         return self._harvestDate
+
+    def repositoryID(self):
+        return self._repositoryID
+
+    def repositoryName(self):
+        return self._repositoryName
 
 class Identify(object):
     def __init__(self, repositoryName, baseURL, protocolVersion, adminEmails,

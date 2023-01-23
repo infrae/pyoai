@@ -266,6 +266,10 @@ class XMLTreeServer(object):
             e_datestamp.text = about.datestamp()
             e_metadataNamespace = SubElement(e_originDescription, nsoai('metadataNamespace'))
             e_metadataNamespace.text = about.metadataNamespace()
+            e_repositoryID = SubElement(e_originDescription, nsoai('repositoryID'))
+            e_repositoryID.text = about.repositoryID()
+            e_repositoryName = SubElement(e_originDescription, nsoai('repositoryName'))
+            e_repositoryName.text = about.repositoryName()
 
 class ServerBase(common.ResumptionOAIPMH):
     """A server that responds to messages by returning OAI-PMH compliant XML.
