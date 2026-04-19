@@ -2,6 +2,8 @@
 OAIPMH
 ======
 
+.. image:: https://img.shields.io/pypi/v/pyoai.svg
+        :target: https://pypi.python.org/pypi/pyoai
 
 .. image:: https://github.com/infrae/pyoai/workflows/Run%20tests/badge.svg
     :target: https://github.com/infrae/pyoai/actions?query=workflow%3A%22Run+tests%22
