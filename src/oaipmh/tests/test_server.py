@@ -1,15 +1,11 @@
 import unittest
 import os
-import six
-try:
-    from StringIO import StringIO
-except ImportError:
-    from io import StringIO, BytesIO
+from io import BytesIO
 from oaipmh import server, client, common, metadata, error
 from lxml import etree
 from datetime import datetime
-import fakeclient
-import fakeserver
+from . import fakeclient
+from . import fakeserver
 
 NS_OAIPMH = server.NS_OAIPMH
 
@@ -21,9 +17,7 @@ def fileInTestDir(name):
 oaischema = etree.XMLSchema(etree.parse(fileInTestDir('OAI-PMH.xsd')))
 
 def etree_parse(xml):
-    if six.PY2:
-        return etree.parse(StringIO(xml))
-    return etree.parse(BytesIO(xml)) # .decode("utf-8")))
+    return etree.parse(BytesIO(xml))
 
 class XMLTreeServerTestCase(unittest.TestCase):
     
@@ -42,37 +36,37 @@ class XMLTreeServerTestCase(unittest.TestCase):
     def test_getRecord(self):
         tree = self._server.getRecord(
             metadataPrefix='oai_dc', identifier='hdl:1765/315')
-        self.assert_(oaischema.validate(tree))
+        self.assertTrue(oaischema.validate(tree))
 
     def test_getMetadata(self):
         tree = self._server.getMetadata(
             metadataPrefix='oai_dc', identifier='hdl:1765/315')
-        self.assertEquals(tree.tag,
+        self.assertEqual(tree.tag,
                           '{http://www.openarchives.org/OAI/2.0/oai_dc/}dc')
         
     def test_identify(self):
         tree = self._server.identify()
-        self.assert_(oaischema.validate(tree))
+        self.assertTrue(oaischema.validate(tree))
 
     def test_listIdentifiers(self):
         tree = self._server.listIdentifiers(
             from_=datetime(2003, 4, 10),
             metadataPrefix='oai_dc')
-        self.assert_(oaischema.validate(tree))
+        self.assertTrue(oaischema.validate(tree))
         
     def test_listMetadataFormats(self):
         tree = self._server.listMetadataFormats()
-        self.assert_(oaischema.validate(tree))
+        self.assertTrue(oaischema.validate(tree))
 
     def test_listRecords(self):
         tree = self._server.listRecords(
             from_=datetime(2003, 4, 10),
             metadataPrefix='oai_dc')
-        self.assert_(oaischema.validate(tree))
+        self.assertTrue(oaischema.validate(tree))
 
     def test_listSets(self):
         tree = self._server.listSets()
-        self.assert_(oaischema.validate(tree))
+        self.assertTrue(oaischema.validate(tree))
 
     def test_namespaceDeclarations(self):
         # according to the spec, all namespace used in the metadata
@@ -87,8 +81,7 @@ class XMLTreeServerTestCase(unittest.TestCase):
         # ugly xml manipulation, this is probably why the requirement is in
         # the spec (yuck!)
         xml = etree.tostring(tree)
-        if six.PY3:
-            xml = xml.decode("utf-8")
+        xml = xml.decode("utf-8")
         xml = xml.split('<metadata>')[-1].split('</metadata>')[0]
         first_el = xml.split('>')[0]
         self.assertTrue(first_el.startswith('<oai_dc:dc'))
@@ -120,14 +113,14 @@ class ServerTestCase(unittest.TestCase):
     def test_identify(self):
         xml = self._server.identify()
         tree = etree_parse(xml)
-        self.assert_(oaischema.validate(tree))
+        self.assertTrue(oaischema.validate(tree))
         
     def test_listIdentifiers(self):
         xml = self._server.listIdentifiers(
             from_=datetime(2003, 4, 10),
             metadataPrefix='oai_dc')
         tree = etree_parse(xml)
-        self.assert_(oaischema.validate(tree))
+        self.assertTrue(oaischema.validate(tree))
         
 class ResumptionTestCase(unittest.TestCase):
     def setUp(self):
@@ -141,7 +134,7 @@ class ResumptionTestCase(unittest.TestCase):
         while token is not None:
             result, token = self._server.listIdentifiers(resumptionToken=token)
             headers.extend(result)
-        self.assertEquals([str(i) for i in range(100)],
+        self.assertEqual([str(i) for i in range(100)],
                           [header.identifier() for header in headers])
 
     def test_tree_resumption(self):
@@ -150,9 +143,9 @@ class ResumptionTestCase(unittest.TestCase):
         myserver = server.XMLTreeServer(
             self._server, metadata_registry)
         tree = myserver.listIdentifiers(metadataPrefix='oai_dc')
-        self.assert_(oaischema.validate(tree))
+        self.assertTrue(oaischema.validate(tree))
         # we should find a resumptionToken element with text
-        self.assert_(
+        self.assertTrue(
             tree.xpath('//oai:resumptionToken/text()', 
                        namespaces={'oai': NS_OAIPMH} ))
         
@@ -166,14 +159,14 @@ class BatchingResumptionTestCase(unittest.TestCase):
         result, token = resumption_server.listIdentifiers(
             metadataPrefix='oai_dc')
         headers.extend(result)
-        self.assert_(token is not None)
+        self.assertTrue(token is not None)
         while token is not None:
-            self.assert_(result)
-            self.assertEquals(expected_length, len(result))
+            self.assertTrue(result)
+            self.assertEqual(expected_length, len(result))
             result, token = resumption_server.listIdentifiers(
                 resumptionToken=token)
             headers.extend(result)
-        self.assertEquals([str(i) for i in range(100)],
+        self.assertEqual([str(i) for i in range(100)],
                           [header.identifier() for header in headers])
 
     def test_resumption(self):
@@ -187,8 +180,8 @@ class BatchingResumptionTestCase(unittest.TestCase):
         myserver = server.BatchingResumption(self._fakeserver, 300)
         result, token = myserver.listIdentifiers(
             metadataPrefix='oai_dc')
-        self.assert_(token is None)
-        self.assertEquals([str(i) for i in range(100)],
+        self.assertTrue(token is None)
+        self.assertEqual([str(i) for i in range(100)],
                           [header.identifier() for header in result])
         
     def test_tree_resumption(self):
@@ -196,9 +189,9 @@ class BatchingResumptionTestCase(unittest.TestCase):
         metadata_registry.registerWriter('oai_dc', server.oai_dc_writer)
         myserver = server.XMLTreeServer(self._server, metadata_registry)
         tree = myserver.listIdentifiers(metadataPrefix='oai_dc')
-        self.assert_(oaischema.validate(tree))
+        self.assertTrue(oaischema.validate(tree))
         # we should find a resumptionToken element with text
-        self.assert_(
+        self.assertTrue(
             tree.xpath('//oai:resumptionToken/text()', 
                        namespaces={'oai': NS_OAIPMH} ))
         
@@ -214,19 +207,19 @@ class ClientServerTestCase(unittest.TestCase):
 
     def test_listIdentifiers(self):
         headers = self._client.listIdentifiers(metadataPrefix='oai_dc')
-        self.assertEquals([str(i) for i in range(100)],
+        self.assertEqual([str(i) for i in range(100)],
                           [header.identifier() for header in headers])
 
     def test_listRecords(self):
         records = self._client.listRecords(metadataPrefix='oai_dc')
         records = list(records)
-        self.assertEquals(100, len(records))
+        self.assertEqual(100, len(records))
         metadatas = [metadata for (header, metadata, about) in records]
         result = []
         for metadata in metadatas:
             result.append(metadata.getField('title')[0])
         expected = ['Title %s' % i for i in range(100)]
-        self.assertEquals(expected, result)
+        self.assertEqual(expected, result)
         #for record in records:
         #    print record[0].datestamp()
 
@@ -236,7 +229,7 @@ class ClientServerTestCase(unittest.TestCase):
                                                until=datetime(2004, 7, 1))
         # we expect 52 items
         headers = list(headers)
-        self.assertEquals(52, len(headers))
+        self.assertEqual(52, len(headers))
 
     def test_listIdentifiersFromUntil_nothing(self):
         self.assertRaises(error.NoRecordsMatchError,
@@ -324,13 +317,13 @@ class ErrorTestCase(unittest.TestCase):
         
     
     def assertErrors(self, errors, xml):
-        self.assertEquals(errors, self.findErrors(xml))
+        self.assertEqual(errors, self.findErrors(xml))
         
     def findErrors(self, xml):
         # parse
         tree = etree_parse(xml)
         # validate xml
-        self.assert_(oaischema.validate(tree))
+        self.assertTrue(oaischema.validate(tree))
         result = []
         for e in tree.xpath(
             '//oai:error', namespaces={'oai': NS_OAIPMH}):
@@ -352,31 +345,31 @@ class DeletionTestCase(unittest.TestCase):
         headers = self._client.listIdentifiers(metadataPrefix='oai_dc')
         # we expect 12 items
         headers = list(headers)
-        self.assertEquals(12, len(headers))
+        self.assertEqual(12, len(headers))
         # now delete
         self._fakeserver.deletionEvent()
         # check again, we expect 12 items, but half of which is deleted
         headers = self._client.listIdentifiers(metadataPrefix='oai_dc')
         headers = list(headers)
-        self.assertEquals(12, len(headers))
+        self.assertEqual(12, len(headers))
         deleted_count = 0
         for header in headers:
             if header.isDeleted():
                 deleted_count += 1
-        self.assertEquals(6, deleted_count)
+        self.assertEqual(6, deleted_count)
 
     def test_listRecords(self):
         self._fakeserver.deletionEvent()
         # we expect 12 items, but half of which is deleted
         records = self._client.listRecords(metadataPrefix='oai_dc')
         records = list(records)
-        self.assertEquals(12, len(records))
+        self.assertEqual(12, len(records))
         deleted_count = 0
         for header, metadata, about in records:
             if header.isDeleted():
                 deleted_count += 1
-                self.assertEquals(None, metadata)
-        self.assertEquals(6, deleted_count)
+                self.assertEqual(None, metadata)
+        self.assertEqual(6, deleted_count)
 
     def test_getRecord(self):
         self._fakeserver.deletionEvent()
@@ -386,8 +379,8 @@ class DeletionTestCase(unittest.TestCase):
         # we try to access a deleted record
         header, metadata, about = self._client.getRecord(
             metadataPrefix='oai_dc', identifier='1')
-        self.assert_(header.isDeleted())
-        self.assertEquals(None, metadata)
+        self.assertTrue(header.isDeleted())
+        self.assertEqual(None, metadata)
 
 class NsMapTestCase(unittest.TestCase):
     def setUp(self):
@@ -408,21 +401,8 @@ class NsMapTestCase(unittest.TestCase):
         # if we pass another nsmap along to the server constructor, we
         # can control extra namespaces in the output envelope
         tree = self._xmlserver.identify()
-        self.assertEquals(
+        self.assertEqual(
             'http://www.cow.com',
             tree.getroot().nsmap['cow'])
         
         
-def test_suite():
-    return unittest.TestSuite([
-        unittest.makeSuite(XMLTreeServerTestCase),
-        unittest.makeSuite(ServerTestCase),
-        unittest.makeSuite(ResumptionTestCase),
-        unittest.makeSuite(BatchingResumptionTestCase),
-        unittest.makeSuite(ClientServerTestCase),
-        unittest.makeSuite(ErrorTestCase),
-        unittest.makeSuite(DeletionTestCase),
-        unittest.makeSuite(NsMapTestCase)])
-
-if __name__=='__main__':
-    main(defaultTest='test_suite')
