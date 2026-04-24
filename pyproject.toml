@@ -1,0 +1,71 @@
+[build-system]
+requires = ["setuptools>=75.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "pyoai"
+version = "2.5.2"
+description = "The oaipmh module is a Python implementation of an \"Open Archives Initiative Protocol for Metadata Harvesting\" (version 2) client and server."
+readme = "README.rst"
+requires-python = ">=3.10"
+license = "BSD-3-Clause"
+authors = [
+    {name = "Infrae", email = "info@infrae.com"},
+]
+keywords = ["OAI-PMH", "xml", "archive"]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Programming Language :: Python",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Topic :: Software Development :: Libraries :: Python Modules",
+    "Environment :: Web Environment",
+]
+dependencies = [
+    "lxml",
+]
+
+[project.urls]
+Homepage = "http://www.infrae.com/download/oaipmh"
+Repository = "https://github.com/infrae/pyoai"
+
+[project.optional-dependencies]
+dev = [
+    "pytest",
+    "pre-commit",
+    "ruff",
+    "bumpver",
+]
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.setuptools.package-dir]
+"" = "src"
+
+[tool.ruff]
+target-version = "py310"
+
+[tool.ruff.lint]
+select = ["E", "F", "W"]
+
+[tool.pytest.ini_options]
+testpaths = ["src/oaipmh/tests"]
+python_classes = ["*TestCase"]
+
+[tool.bumpver]
+current_version = "2.5.2"
+version_pattern = "MAJOR.MINOR.PATCH"
+commit_message = "Bump version {old_version} -> {new_version}"
+commit = true
+tag = true
+push = false
+
+[tool.bumpver.file_patterns]
+"pyproject.toml" = [
+    'current_version = "{version}"',
+    'version = "{version}"',
+]

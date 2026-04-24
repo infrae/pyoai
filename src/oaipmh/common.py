@@ -1,4 +1,4 @@
-import pkg_resources
+from importlib.metadata import PackageNotFoundError, version as _pkg_version
 
 from oaipmh import error
 
@@ -61,11 +61,9 @@ class Identify(object):
         self._descriptions = []
         
         if toolkit_description:
-            req = pkg_resources.Requirement.parse('pyoai')
-            egg = pkg_resources.working_set.find(req)
-            if egg:
-                version = '<version>%s</version>' % egg.version
-            else:
+            try:
+                version = '<version>%s</version>' % _pkg_version('pyoai')
+            except PackageNotFoundError:
                 version = ''
             self.add_description(
                 '<toolkit xsi:schemaLocation='

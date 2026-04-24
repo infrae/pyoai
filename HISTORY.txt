@@ -2,6 +2,44 @@ Changelog
 =========
 2.5.2 (unreleased)
 
+-  Replaced deprecated ``datetime.utcnow()`` with timezone-aware
+   ``datetime.now(timezone.utc)``.
+
+-  Modernized packaging: migrated from ``setup.py`` / ``setup.cfg`` /
+   ``MANIFEST.in`` / ``buildout.cfg`` to ``pyproject.toml`` + ``uv``.
+
+-  Dropped support for Python 2.7 and Python 3.5-3.9 (all EOL). Now
+   requires Python 3.10+. CI matrix: 3.10, 3.11, 3.12, 3.13.
+
+-  Removed ``six`` dependency; package is Python 3-only.
+
+-  Switched test runner from ``tox`` / ``python -m unittest`` to
+   ``pytest``.
+
+-  Python 3.12+ compatibility fixes: replaced removed ``pkg_resources``
+   with ``importlib.metadata``; removed dead ``unittest.makeSuite`` and
+   ``test_suite()`` code; renamed deprecated ``assertEquals`` /
+   ``assert_`` aliases; replaced removed lxml ``evaluator.evaluate``
+   attribute with direct call.
+
+-  Replaced Travis/tox-based CI with a modern GitHub Actions workflow
+   using ``uv``; added informational (non-blocking) ``ruff`` lint job.
+
+-  Added ``pre-commit`` configuration with ``ruff`` (staged-files only)
+   and standard hygiene hooks.
+
+-  Consolidated version management to a single source in
+   ``pyproject.toml`` via ``bumpver`` (previously version was split
+   between ``setup.py`` at ``2.5.2pre`` and a stale ``bumpversion``
+   config at ``2.5.0``).
+
+-  Removed obsolete files: ``.hgignore``, ``.hgtags`` (Mercurial
+   remnants), ``buildout.cfg``, ``Makefile``, ``INSTALL.txt``.
+
+-  Modernized README: updated badges, fixed Python 2 ``print``
+   statement in example, added install instructions for ``pip`` and
+   ``uv``.
+
 2.5.1
 
 -  Added customizable client retry policy (contributed by adimascio)

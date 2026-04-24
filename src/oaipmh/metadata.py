@@ -69,7 +69,7 @@ class MetadataReader(object):
         xpath_evaluator = etree.XPathEvaluator(element, 
                                                namespaces=self._namespaces)
         
-        e = xpath_evaluator.evaluate
+        e = xpath_evaluator
         # now extra field info according to xpath expr
         for field_name, (field_type, expr) in list(self._fields.items()):
             if field_type == 'bytes':
