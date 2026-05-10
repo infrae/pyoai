@@ -46,6 +46,50 @@ class Metadata(object):
 
     __getitem__ = getField
 
+class About(object):
+    def __init__(self, element, baseURL, identifier, datestamp, metadataNamespace, harvestDate, repositoryID=None, repositoryName=None, originDescription=None):
+        self._element = element
+        # force identifier to be a string, it might be 
+        # an lxml.etree._ElementStringResult...
+        try:
+            self._identifier = str(identifier)
+        except UnicodeEncodeError:
+            self._identifier = unicode(identifier)
+        self._datestamp = datestamp
+        self._baseURL = baseURL
+        self._metadataNamespace = metadataNamespace
+        self._harvestDate = harvestDate
+        self._repositoryID = repositoryID
+        self._repositoryName = repositoryName
+        self._originDescription = originDescription
+
+    def element(self):
+        return self._element
+
+    def identifier(self):
+        return self._identifier
+
+    def datestamp(self):
+        return self._datestamp
+
+    def baseURL(self):
+        return self._baseURL
+
+    def metadataNamespace(self):
+        return self._metadataNamespace
+
+    def harvestDate(self):
+        return self._harvestDate
+
+    def repositoryID(self):
+        return self._repositoryID
+
+    def repositoryName(self):
+        return self._repositoryName
+    
+    def originDescription(self):
+        return self._originDescription
+
 class Identify(object):
     def __init__(self, repositoryName, baseURL, protocolVersion, adminEmails,
                  earliestDatestamp, deletedRecord, granularity, compression,
