@@ -12,7 +12,6 @@ except ImportError:
     import urllib2
     from urllib import urlencode
 
-import sys
 import base64
 from lxml import etree
 import time
@@ -40,7 +39,7 @@ class BaseClient(common.OAIPMH):
         'expected-errcodes': {503},
     }
 
-    def __init__(self, metadata_registry=None, custom_retry_policy=None):
+    def __init__(self, metadata_registry=None, custom_retry_policy=None, raw_data=None):
         self._metadata_registry = (
             metadata_registry or metadata.global_metadata_registry)
         self._ignore_bad_character_hack = 0
@@ -48,6 +47,7 @@ class BaseClient(common.OAIPMH):
         self.retry_policy = self.default_retry_policy.copy()
         if custom_retry_policy is not None:
             self.retry_policy.update(custom_retry_policy)
+        self._raw_data = raw_data
 
     def updateGranularity(self):
         """Update the granularity setting dependent on that the server says.
@@ -142,22 +142,21 @@ class BaseClient(common.OAIPMH):
 
     def Identify_impl(self, args, tree):
         namespaces = self.getNamespaces()
-        evaluator = etree.XPathEvaluator(tree, namespaces=namespaces)
-        identify_node = evaluator.evaluate(
-            '/oai:OAI-PMH/oai:Identify')[0]
-        identify_evaluator = etree.XPathEvaluator(identify_node,
-                                                  namespaces=namespaces)
-        e = identify_evaluator.evaluate
+        identify_node = tree.xpath(
+            '/oai:OAI-PMH/oai:Identify',
+            namespaces=namespaces
+        )[0]
+        e = identify_node.xpath
 
-        repositoryName = e('string(oai:repositoryName/text())')
-        baseURL = e('string(oai:baseURL/text())')
-        protocolVersion = e('string(oai:protocolVersion/text())')
-        adminEmails = e('oai:adminEmail/text()')
+        repositoryName = e('string(oai:repositoryName/text())', namespaces=namespaces)
+        baseURL = e('string(oai:baseURL/text())', namespaces=namespaces)
+        protocolVersion = e('string(oai:protocolVersion/text())', namespaces=namespaces)
+        adminEmails = e('oai:adminEmail/text()', namespaces=namespaces)
         earliestDatestamp = datestamp_to_datetime(
-            e('string(oai:earliestDatestamp/text())'))
-        deletedRecord = e('string(oai:deletedRecord/text())')
-        granularity = e('string(oai:granularity/text())')
-        compression = e('oai:compression/text()')
+            e('string(oai:earliestDatestamp/text())', namespaces=namespaces))
+        deletedRecord = e('string(oai:deletedRecord/text())', namespaces=namespaces)
+        granularity = e('string(oai:granularity/text())', namespaces=namespaces)
+        compression = e('oai:compression/text()', namespaces=namespaces)
         # XXX description
         identify = common.Identify(
             repositoryName, baseURL, protocolVersion,
@@ -177,18 +176,16 @@ class BaseClient(common.OAIPMH):
 
     def ListMetadataFormats_impl(self, args, tree):
         namespaces = self.getNamespaces()
-        evaluator = etree.XPathEvaluator(tree,
-                                         namespaces=namespaces)
-
-        metadataFormat_nodes = evaluator.evaluate(
-            '/oai:OAI-PMH/oai:ListMetadataFormats/oai:metadataFormat')
+        metadataFormat_nodes = tree.xpath(
+            '/oai:OAI-PMH/oai:ListMetadataFormats/oai:metadataFormat',
+            namespaces=namespaces
+        )
         metadataFormats = []
         for metadataFormat_node in metadataFormat_nodes:
-            e = etree.XPathEvaluator(metadataFormat_node,
-                                     namespaces=namespaces).evaluate
-            metadataPrefix = e('string(oai:metadataPrefix/text())')
-            schema = e('string(oai:schema/text())')
-            metadataNamespace = e('string(oai:metadataNamespace/text())')
+            e = metadataFormat_node.xpath
+            metadataPrefix = e('string(oai:metadataPrefix/text())', namespaces=namespaces)
+            schema = e('string(oai:schema/text())', namespaces=namespaces)
+            metadataNamespace = e('string(oai:metadataNamespace/text())', namespaces=namespaces)
             metadataFormat = (metadataPrefix, schema, metadataNamespace)
             metadataFormats.append(metadataFormat)
 
@@ -224,28 +221,23 @@ class BaseClient(common.OAIPMH):
 
     # various helper methods
 
-    def buildRecords(self,
-                     metadata_prefix, namespaces, metadata_registry, tree):
-        # first find resumption token if available
-        evaluator = etree.XPathEvaluator(tree,
-                                         namespaces=namespaces)
-        token = evaluator.evaluate(
-            'string(/oai:OAI-PMH/*/oai:resumptionToken/text())')
-        if token.strip() == '':
+    def buildRecords(self, metadata_prefix, namespaces, metadata_registry, tree):
+        token = tree.xpath(
+            'string(/oai:OAI-PMH/*/oai:resumptionToken/text())',
+            namespaces=namespaces
+        )
+        if token.strip() == '' or self._raw_data:
             token = None
-        record_nodes = evaluator.evaluate(
-            '/oai:OAI-PMH/*/oai:record')
+        record_nodes = tree.xpath('/oai:OAI-PMH/*/oai:record', namespaces=namespaces)
         result = []
         for record_node in record_nodes:
-            record_evaluator = etree.XPathEvaluator(record_node,
-                                                    namespaces=namespaces)
-            e = record_evaluator.evaluate
+            e = record_node.xpath
             # find header node
-            header_node = e('oai:header')[0]
+            header_node = e('oai:header', namespaces=namespaces)[0]
             # create header
             header = buildHeader(header_node, namespaces)
             # find metadata node
-            metadata_list = e('oai:metadata')
+            metadata_list = e('oai:metadata', namespaces=namespaces)
             if metadata_list:
                 metadata_node = metadata_list[0]
                 # create metadata
@@ -258,16 +250,17 @@ class BaseClient(common.OAIPMH):
         return result, token
 
     def buildIdentifiers(self, namespaces, tree):
-        evaluator = etree.XPathEvaluator(tree,
-                                         namespaces=namespaces)
-        # first find resumption token is available
-        token = evaluator.evaluate(
-            'string(/oai:OAI-PMH/*/oai:resumptionToken/text())')
         #'string(/oai:OAI-PMH/oai:ListIdentifiers/oai:resumptionToken/text())')
+        token = tree.xpath(
+            'string(/oai:OAI-PMH/*/oai:resumptionToken/text())',
+            namespaces=namespaces
+        )
         if token.strip() == '':
             token = None
-        header_nodes = evaluator.evaluate(
-                '/oai:OAI-PMH/oai:ListIdentifiers/oai:header')
+        header_nodes = tree.xpath(
+            '/oai:OAI-PMH/oai:ListIdentifiers/oai:header',
+            namespaces=namespaces
+        )
         result = []
         for header_node in header_nodes:
             header = buildHeader(header_node, namespaces)
@@ -275,23 +268,23 @@ class BaseClient(common.OAIPMH):
         return result, token
 
     def buildSets(self, namespaces, tree):
-        evaluator = etree.XPathEvaluator(tree,
-                                         namespaces=namespaces)
-        # first find resumption token if available
-        token = evaluator.evaluate(
-            'string(/oai:OAI-PMH/oai:ListSets/oai:resumptionToken/text())')
+        token = tree.xpath(
+            'string(/oai:OAI-PMH/oai:ListSets/oai:resumptionToken/text())',
+            namespaces=namespaces
+        )
         if token.strip() == '':
             token = None
-        set_nodes = evaluator.evaluate(
-            '/oai:OAI-PMH/oai:ListSets/oai:set')
+        set_nodes = tree.xpath(
+            '/oai:OAI-PMH/oai:ListSets/oai:set',
+            namespaces=namespaces
+        )
         sets = []
         for set_node in set_nodes:
-            e = etree.XPathEvaluator(set_node,
-                                     namespaces=namespaces).evaluate
+            e = set_node.xpath
             # make sure we get back unicode strings instead
             # of lxml.etree._ElementUnicodeResult objects.
-            setSpec = six.text_type(e('string(oai:setSpec/text())'))
-            setName = six.text_type(e('string(oai:setName/text())'))
+            setSpec = six.text_type(e('string(oai:setSpec/text())', namespaces=namespaces))
+            setName = six.text_type(e('string(oai:setName/text())', namespaces=namespaces))
             # XXX setDescription nodes
             sets.append((setSpec, setName, None))
         return sets, token
@@ -327,22 +320,31 @@ class BaseClient(common.OAIPMH):
 
 class Client(BaseClient):
 
-    def __init__(self, base_url, metadata_registry=None, credentials=None,
-                 local_file=False, force_http_get=False, custom_retry_policy=None):
-        BaseClient.__init__(self, metadata_registry,
-                            custom_retry_policy=custom_retry_policy)
+    def __init__(
+        self,
+        base_url,
+        metadata_registry=None,
+        credentials=None,
+        local_file=False,
+        force_http_get=False,
+        custom_retry_policy=None,
+        raw_data=None,
+    ):
+        BaseClient.__init__(
+            self, metadata_registry, custom_retry_policy=custom_retry_policy, raw_data=raw_data
+        )
         self._base_url = base_url
         self._local_file = local_file
         self._force_http_get = force_http_get
         if credentials is not None:
-            self._credentials = base64.encodestring('%s:%s' % credentials)
+            self._credentials = base64.encodebytes(credentials.encode()).decode()
         else:
             self._credentials = None
 
     def makeRequest(self, **kw):
-        """Either load a local XML file or actually retrieve XML from a server.
-        """
-        if self._local_file:
+        if isinstance(self._raw_data, str):
+            return self._raw_data.encode('ascii', 'replace')
+        elif self._local_file:
             with codecs.open(self._base_url, 'r', 'utf-8') as xmlfile:
                 text = xmlfile.read()
             return text.encode('ascii', 'replace')
@@ -367,13 +369,12 @@ class Client(BaseClient):
             )
 
 def buildHeader(header_node, namespaces):
-    e = etree.XPathEvaluator(header_node,
-                            namespaces=namespaces).evaluate
-    identifier = e('string(oai:identifier/text())')
+    e = header_node.xpath
+    identifier = e('string(oai:identifier/text())', namespaces=namespaces)
     datestamp = datestamp_to_datetime(
-        str(e('string(oai:datestamp/text())')))
-    setspec = [str(s) for s in e('oai:setSpec/text()')]
-    deleted = e("@status = 'deleted'")
+        str(e('string(oai:datestamp/text())', namespaces=namespaces)))
+    setspec = [str(s) for s in e('oai:setSpec/text()', namespaces=namespaces)]
+    deleted = e("@status = 'deleted'", namespaces=namespaces)
     return common.Header(header_node, identifier, datestamp, setspec, deleted)
 
 def ResumptionListGenerator(firstBatch, nextBatch):

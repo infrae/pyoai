@@ -1,7 +1,5 @@
 import sys
 
-from lxml import etree
-from lxml.etree import SubElement
 from oaipmh import common
 
 if sys.version_info[0] == 3:
@@ -21,7 +19,7 @@ class MetadataRegistry(object):
     def __init__(self):
         self._readers = {}
         self._writers = {}
-        
+
     def registerReader(self, metadata_prefix, reader):
         self._readers[metadata_prefix] = reader
 
@@ -30,10 +28,10 @@ class MetadataRegistry(object):
 
     def hasReader(self, metadata_prefix):
         return metadata_prefix in self._readers
-    
+
     def hasWriter(self, metadata_prefix):
         return metadata_prefix in self._writers
-    
+
     def readMetadata(self, metadata_prefix, element):
         """Turn XML into metadata object.
 
@@ -45,7 +43,7 @@ class MetadataRegistry(object):
 
     def writeMetadata(self, metadata_prefix, element, metadata):
         """Write metadata as XML.
-        
+
         element - ElementTree element to write under
         metadata - metadata object to write
         """
@@ -65,28 +63,44 @@ class MetadataReader(object):
 
     def __call__(self, element):
         map = {}
-        # create XPathEvaluator for this element
-        xpath_evaluator = etree.XPathEvaluator(element, 
-                                               namespaces=self._namespaces)
-        
-        e = xpath_evaluator.evaluate
-        # now extra field info according to xpath expr
+        # Alias for element.xpath
+        e = element.xpath
         for field_name, (field_type, expr) in list(self._fields.items()):
-            if field_type == 'bytes':
-                value = str(e(expr))
-            elif field_type == 'bytesList':
-                value = [str(item) for item in e(expr)]
-            elif field_type == 'text':
-                # make sure we get back unicode strings instead
-                # of lxml.etree._ElementUnicodeResult objects.
-                value = text_type(e(expr))
-            elif field_type == 'textList':
-                # make sure we get back unicode strings instead
-                # of lxml.etree._ElementUnicodeResult objects.
-                value = [text_type(v) for v in e(expr)]
-            else:
-                raise Error("Unknown field type: %s" % field_type)
-            map[field_name] = value
+            try:
+                # The core logic is to safely handle the result from xpath()
+                raw_result = e(expr, namespaces=self._namespaces)
+
+                value = None
+                if field_type == 'bytes':
+                    value = str(raw_result)
+                elif field_type == 'bytesList':
+                    # Ensure the result is iterable before the list comprehension
+                    value = [str(item) for item in (raw_result if isinstance(raw_result, list) else [raw_result])]
+                elif field_type == 'text':
+                    value = text_type(raw_result)
+                elif field_type == 'textList':
+                    # This is the critical part to fix the error
+                    if isinstance(raw_result, list):
+                        # This handles the expected case: a list of elements/strings
+                        value = [text_type(v) for v in raw_result]
+                    elif raw_result is not None:
+                        # This handles a single value being returned
+                        value = [text_type(raw_result)]
+                    else:
+                        # Handles cases with no result (None)
+                        value = []
+                else:
+                    raise Error("Unknown field type: %s" % field_type)
+
+                map[field_name] = value
+            except Exception as ex:
+                # A robust way to prevent crashes
+                print(f"Warning: Error processing field '{field_name}' with expression '{expr}': {ex}", file=sys.stderr)
+                if field_type.endswith('List'):
+                    map[field_name] = []
+                else:
+                    map[field_name] = ""
+
         return common.Metadata(element, map)
 
 oai_dc_reader = MetadataReader(
@@ -111,6 +125,3 @@ oai_dc_reader = MetadataReader(
     'oai_dc': 'http://www.openarchives.org/OAI/2.0/oai_dc/',
     'dc' : 'http://purl.org/dc/elements/1.1/'}
     )
-
-
-    

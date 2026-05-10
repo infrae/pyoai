@@ -1,5 +1,3 @@
-import pkg_resources
-
 from oaipmh import error
 
 class Header(object):
@@ -49,7 +47,7 @@ class Metadata(object):
 class Identify(object):
     def __init__(self, repositoryName, baseURL, protocolVersion, adminEmails,
                  earliestDatestamp, deletedRecord, granularity, compression,
-                 toolkit_description=True):
+                 toolkit_description=False):
         self._repositoryName = repositoryName
         self._baseURL = baseURL
         self._protocolVersion = protocolVersion
@@ -59,8 +57,10 @@ class Identify(object):
         self._granularity = granularity
         self._compression = compression
         self._descriptions = []
-        
+
         if toolkit_description:
+            import pkg_resources
+
             req = pkg_resources.Requirement.parse('pyoai')
             egg = pkg_resources.working_set.find(req)
             if egg:
@@ -77,7 +77,7 @@ class Identify(object):
                 '%s'
                 '<URL>http://infrae.com/products/oaipack</URL>'
                 '</toolkit>' % version)
-        
+
     def repositoryName(self):
         return self._repositoryName
 
