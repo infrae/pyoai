@@ -1,5 +1,6 @@
 from setuptools import setup, find_packages
 from os.path import join, dirname
+import io
 
 setup(
     name='pyoai',
@@ -15,7 +16,7 @@ setup(
     description="""The oaipmh module is a Python implementation of an "Open Archives Initiative Protocol for Metadata Harvesting" (version 2) client and server.""",
     long_description=(open(join(dirname(__file__), 'README.rst')).read()+
         '\n\n'+
-        open(join(dirname(__file__), 'HISTORY.txt')).read()),
+        io.open(join(dirname(__file__), 'HISTORY.txt'), encoding='utf8').read()),
     long_description_content_type='text/x-rst',
     packages=find_packages('src'),
     package_dir = {'': 'src'},
