@@ -40,7 +40,7 @@ class BaseClient(common.OAIPMH):
         'expected-errcodes': {503},
     }
 
-    def __init__(self, metadata_registry=None, custom_retry_policy=None):
+    def __init__(self, metadata_registry=None, custom_retry_policy=None, recover=False):
         self._metadata_registry = (
             metadata_registry or metadata.global_metadata_registry)
         self._ignore_bad_character_hack = 0
@@ -48,6 +48,7 @@ class BaseClient(common.OAIPMH):
         self.retry_policy = self.default_retry_policy.copy()
         if custom_retry_policy is not None:
             self.retry_policy.update(custom_retry_policy)
+        self.XMLParser = etree.XMLParser(recover=recover)
 
     def updateGranularity(self):
         """Update the granularity setting dependent on that the server says.
@@ -122,7 +123,7 @@ class BaseClient(common.OAIPMH):
             if hasattr(xml, "encode"):
                 xml = xml.encode("utf-8")
             # xml = xml.encode("utf-8")
-        return etree.XML(xml)
+        return etree.XML(xml, parser=self.XMLParser)
 
     # implementation of the various methods, delegated here by
     # handleVerb method
@@ -328,9 +329,10 @@ class BaseClient(common.OAIPMH):
 class Client(BaseClient):
 
     def __init__(self, base_url, metadata_registry=None, credentials=None,
-                 local_file=False, force_http_get=False, custom_retry_policy=None):
+                 local_file=False, force_http_get=False, custom_retry_policy=None,
+                 recover=False):
         BaseClient.__init__(self, metadata_registry,
-                            custom_retry_policy=custom_retry_policy)
+                            custom_retry_policy=custom_retry_policy, recover=recover)
         self._base_url = base_url
         self._local_file = local_file
         self._force_http_get = force_http_get
